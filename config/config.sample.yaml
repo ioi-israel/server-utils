@@ -1,0 +1,4 @@
+paths:
+  tasks_dir: "/home/ioi/cms-data/tasks"
+  contests_dir: "/home/ioi/cms-data/contests"
+  users_file: "/home/ioi/cms-data/users/users-2018.yaml"
