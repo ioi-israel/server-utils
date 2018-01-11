@@ -176,7 +176,9 @@ class IsraelContestLoader(ContestLoader):
         See docstring in base_loader.
         """
         contest = self.get_contest_object()
-        # TODO
+        participations = IsraelContestLoader.get_participations_info()
+        tasks = self.get_tasks_list()
+        return contest, tasks, participations
 
     def get_contest_object(self):
         """
@@ -209,8 +211,33 @@ class IsraelContestLoader(ContestLoader):
 
         return Contest(**args)
 
+    def get_tasks_list(self):
+        """
+        Return a list of this contest's tasks' short names.
+        """
+        return [task["short_name"] for task in self.params["tasks"]]
+
     def contest_has_changed(self):
         """
         See docstring in base_loader.
         """
         raise NotImplementedError("Please extend ContestLoader")
+
+    @staticmethod
+    def get_participations_info():
+        """
+        To create a participation, we need two fields:
+        a username, and whether the user is hidden.
+
+        Passwords are ignored, since we don't use contest-specific passwords.
+        """
+        with open(USERS_FILE) as stream:
+            users_list = yaml.safe_load(stream)
+
+        result = []
+        for user in users_list:
+            participation_info = {"username": user["username"]}
+            if "hidden" in user:
+                participation_info["hidden"] = user["hidden"]
+            result += [participation_info]
+        return result
