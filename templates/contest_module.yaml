@@ -1,0 +1,28 @@
+# Template for a contests module.
+
+# Short name for the contest.
+short_name: "2000-01-01"
+
+# Long, descriptive name.
+long_name:  "Computer Science Olympiad Training: 2000-01-01"
+
+# Start and end times (local).
+start_time: "2000-01-01 10:00"
+end_time:   "2000-01-01 14:00"
+
+# List of tasks. Each task must have a short name, a long name, and a path
+# to its directory, relative to the global tasks directory.
+tasks:
+  - short_name: "my_task1"
+    long_name:  "My Task 1"
+    path:       "my_task1_dir"
+  - short_name: "my_task2"
+    long_name:  "My Task 2"
+    path:       "my_task2_dir"
+
+# List of allowed languages. Options are C++ ("cpp"), Java ("java")
+# and C# ("cs").
+languages:
+  - "cpp"
+  - "cs"
+  - "java"

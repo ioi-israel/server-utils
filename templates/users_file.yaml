@@ -1,0 +1,16 @@
+# Template for a users file.
+# Each entry must contain: "username", "password", "first_name", "last_name".
+#
+# Optionally, "hidden" can be set to a boolean in order to hide the user
+# from scoreboards. The default is false.
+
+- username:   "john.doe"
+  password:   "hunter2"
+  first_name: "John"
+  last_name:  "Doe"
+  hidden:     true
+
+- username:   "jane.doe"
+  password:   "huntress2"
+  first_name: "Jane"
+  last_name:  "Doe"
