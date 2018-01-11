@@ -10,6 +10,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from datetime import timedelta
 import os
 import yaml
 
@@ -18,7 +19,8 @@ from cms.db import Contest, User, Task, Statement, \
 from cmscontrib.loaders.base_loader import ContestLoader, TaskLoader, \
     UserLoader
 
-from server_utils.config import CONTESTS_DIR, TASKS_DIR, USERS_FILE
+from server_utils.config import CONTESTS_DIR, TASKS_DIR, USERS_FILE, \
+    time_from_str
 from task_utils.processing.TaskProcessor import TaskProcessor
 
 
@@ -161,6 +163,8 @@ class IsraelContestLoader(ContestLoader):
         if not os.path.isfile(module_path):
             module_path = os.path.join(CONTESTS_DIR, module_path)
 
+        self.contest_dir = os.path.dirname(os.path.abspath(module_path))
+
         with open(module_path) as stream:
             self.params = yaml.safe_load(stream)
 
@@ -171,7 +175,39 @@ class IsraelContestLoader(ContestLoader):
         """
         See docstring in base_loader.
         """
-        raise NotImplementedError("Please extend ContestLoader")
+        contest = self.get_contest_object()
+        # TODO
+
+    def get_contest_object(self):
+        """
+        Return the Contest database object.
+        """
+        args = {}
+
+        # Names.
+        args["name"] = self.params["short_name"]
+        args["description"] = self.params["long_name"]
+
+        # Languages.
+        args["languages"] = self.params["languages"]
+
+        # Times.
+        args["start"] = time_from_str(self.params["start_time"])
+        args["stop"] = time_from_str(self.params["end_time"])
+
+        # Limits.
+        args["max_submission_number"] = self.params["max_submission_number"]
+        args["max_user_test_number"] = self.params["max_user_test_number"]
+
+        interval_seconds = self.params["min_submission_interval"]
+        delta = timedelta(seconds=interval_seconds)
+        args["min_submission_interval"] = delta
+
+        interval_seconds = self.params["min_user_test_interval"]
+        delta = timedelta(seconds=interval_seconds)
+        args["min_user_test_interval"] = delta
+
+        return Contest(**args)
 
     def contest_has_changed(self):
         """
