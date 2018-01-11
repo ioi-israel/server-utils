@@ -26,3 +26,9 @@ languages:
   - "cpp"
   - "cs"
   - "java"
+
+# Global limitations. Intervals are measured in seconds.
+max_submission_number:    .inf
+max_user_test_number:     .inf
+min_submission_interval:  0
+min_user_test_interval:   0
