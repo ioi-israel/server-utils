@@ -66,6 +66,10 @@ class IsraelTaskLoader(TaskLoader):
         self.put_score_mode(args)
         self.put_attachments(args)
 
+        task = Task(**args)
+        task.active_dataset = self.create_dataset(task)
+        return task
+
     def put_names(self, args):
         """
         Put the task's short name and long name in the given args.
@@ -112,6 +116,15 @@ class IsraelTaskLoader(TaskLoader):
                           (base_name, self.short_name)
             digest = self.file_cacher.put_file_from_path(path, description)
             args["attachments"] += [Attachment(base_name, digest)]
+
+    def create_dataset(self, task):
+        """
+        Create the main dataset for this task.
+        """
+        args = {}
+        args["task"] = task
+        # TODO
+        return Dataset(**args)
 
     def task_has_changed(self):
         """
