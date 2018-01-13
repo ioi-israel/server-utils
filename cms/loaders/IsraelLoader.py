@@ -430,7 +430,18 @@ class IsraelContestLoader(ContestLoader):
             self.params = yaml.safe_load(stream)
 
     def get_task_loader(self, taskname):
-        task_info = self.params["tasks"][taskname]
+        """
+        Return an IsraelTaskLoader object for the given task name.
+        The object is initialized with the task info, containing its names.
+        """
+        task_info = None
+        for info in self.params["tasks"]:
+            if info["short_name"] == taskname:
+                task_info = info
+        if task_info is None:
+            raise Exception("Task %s not found in contest %s." %
+                            (taskname, self.contest_dir))
+
         task_path = os.path.join(TASKS_DIR, task_info["path"])
         return IsraelTaskLoader(task_path, self.file_cacher, task_info)
 
