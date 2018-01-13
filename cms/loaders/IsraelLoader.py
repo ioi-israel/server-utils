@@ -38,6 +38,16 @@ class IsraelTaskLoader(TaskLoader):
     This allows more flexibility, e.g. when renaming tasks.
     """
 
+    @staticmethod
+    def detect(path):
+        """
+        See docstring in base_loader.
+
+        Task detection is not supported.
+        """
+        raise NotImplementedError("IsraelTaskLoader doesn't "
+                                  "support detection.")
+
     def __init__(self, path, file_cacher, task_contest_info=None):
         """
         Create a new task loader.
