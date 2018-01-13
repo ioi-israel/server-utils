@@ -11,9 +11,11 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 from datetime import timedelta
+import json
 import os
 import yaml
 
+from cms import SCORE_MODE_MAX
 from cms.db import Contest, User, Task, Statement, \
     SubmissionFormatElement, Dataset, Manager, Testcase
 from cmscontrib.loaders.base_loader import ContestLoader, TaskLoader, \
@@ -31,22 +33,77 @@ class IsraelTaskLoader(TaskLoader):
     The path should be a task directory. It should contain a directory
     "auto.gen" with the generated task files, including a "module.yaml" file.
 
+    Loading tasks outside of contests is not supported. A task is defined
+    by its path, but also by its name which is provided by the contest.
+    This allows more flexibility, e.g. when renaming tasks.
     """
 
-    def __init__(self, path, file_cacher):
+    def __init__(self, path, file_cacher, task_contest_info=None):
+        """
+        Create a new task loader.
+        task_contest_info is a dictionary containing the task info specified
+        in the contest. We don't load without it.
+        """
         super(IsraelTaskLoader, self).__init__(path, file_cacher)
+        if task_contest_info is None:
+            raise Exception("Tasks can only be loaded from a contest.")
+        self.task_contest_info = task_contest_info
+        self.short_name = task_contest_info["short_name"]
+
+        post_gen_dir = os.path.join(path, "auto.gen")
+        module_path = os.path.join(post_gen_dir, "module.yaml")
+        self.processor = TaskProcessor(module_path, path, post_gen_dir=None)
 
     def get_task(self, get_statement):
         """
         See docstring in base_loader.
         """
-        raise NotImplementedError("Please extend TaskLoader")
+        args = {}
+
+        self.put_names(args)
+        if get_statement:
+            self.put_statements(args)
+        self.put_score_mode(args)
+
+    def put_names(self, args):
+        """
+        Put the task's short name and long name in the given args.
+        """
+        args["name"] = self.task_contest_info["short_name"]
+        args["title"] = self.task_contest_info["long_name"]
+
+    def put_statements(self, args):
+        """
+        Create Statement objects and put them in the given args.
+        Define all statements as primary.
+        """
+        args["statements"] = []
+        statements = self.processor.get_statements()
+
+        for statement_info in statements:
+            language = statement_info["language"]
+            path = statement_info["path"]
+            description = "Statement for task %s (lang: %s)" % \
+                          (self.short_name, language)
+            digest = self.file_cacher.put_file_from_path(path, description)
+
+            args["statements"] += [Statement(language, digest)]
+
+        languages = [statement["language"] for statement in statements]
+        args["primary_statements"] = json.dumps(languages)
+
+    def put_score_mode(self, args):
+        """
+        Put the score mode in the given args.
+        Currently we only use the best submission (max score).
+        """
+        args["score_mode"] = SCORE_MODE_MAX
 
     def task_has_changed(self):
         """
         See docstring in base_loader.
         """
-        raise NotImplementedError("Please extend TaskLoader")
+        return True
 
 
 class IsraelUserLoader(UserLoader):
@@ -169,7 +226,9 @@ class IsraelContestLoader(ContestLoader):
             self.params = yaml.safe_load(stream)
 
     def get_task_loader(self, taskname):
-        raise NotImplementedError("Please extend Loader")
+        task_info = self.params["tasks"][taskname]
+        task_path = os.path.join(TASKS_DIR, task_info["path"])
+        return IsraelTaskLoader(task_path, self.file_cacher, task_info)
 
     def get_contest(self):
         """
