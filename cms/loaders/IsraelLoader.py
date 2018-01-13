@@ -180,7 +180,7 @@ class IsraelTaskLoader(TaskLoader):
         """
         Put the time and memory limits in the given args.
         """
-        args["time_limit"] = self.processor.get_time()
+        args["time_limit"] = float(self.processor.get_time())
         args["memory_limit"] = self.processor.get_memory()
 
     def put_dataset_score_type(self, args):
