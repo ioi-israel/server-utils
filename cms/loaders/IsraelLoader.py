@@ -133,10 +133,31 @@ class IsraelTaskLoader(TaskLoader):
     def put_task_submission_format(self, args):
         """
         Put the task's submission format in the given args.
-        This is just a placeholder, overridden by the dataset
-        submission format.
         """
-        args["submission_format"] = [SubmissionFormatElement("Task.%l")]
+
+        if self.task_type == "Batch":
+            # Batch programs are always named Task.cpp, Task.java, etc.
+            # Note that in Java this means the class must be "Task".
+            args["submission_format"] = [SubmissionFormatElement("Task.%l")]
+
+        elif self.task_type == "OutputOnly":
+            # Output files must always be in the form "output_000.txt",
+            # "output_001.txt", and so on.
+            total_testcases = sum(len(subtask["testcases"])
+                                  for subtask in self.subtasks)
+
+            args["submission_format"] = []
+            for index in xrange(total_testcases):
+                args["submission_format"] += [
+                    SubmissionFormatElement("output_%03d.txt" % index)
+                ]
+
+        elif self.task_type == "TwoSteps":
+            # TwoSteps files are always "encoder" and "decoder".
+            args["submission_format"] = [
+                SubmissionFormatElement("encoder.%l"),
+                SubmissionFormatElement("decoder.%l")
+            ]
 
     def put_attachments(self, args):
         """
