@@ -379,20 +379,40 @@ class IsraelContestLoader(ContestLoader):
     def detect(path):
         """
         See docstring in base_loader.
-
-        A contest path is valid if it contains "module.yaml".
-        The path is first checked by itself, and if not valid,
-        it is checked inside the contests directory.
         """
+        return IsraelContestLoader.get_module_path(path) is not None
+
+    @staticmethod
+    def get_module_path(path):
+        """
+        A contest path is valid if it contains "module.yaml".
+        The given path is checked in this order:
+        - If this path itself contains the file.
+        - If this path under the contests directory contains the file.
+        - If this path's base name under the contests directory contains
+          the file.
+
+        Return the absolute path to the module if it exists, otherwise None.
+        """
+        path = os.path.abspath(path)
 
         # Check the given path.
         module_path = os.path.join(path, "module.yaml")
         if os.path.isfile(module_path):
-            return True
+            return module_path
 
         # Check the given path inside contests directory.
-        module_path = os.path.join(CONTESTS_DIR, module_path)
-        return os.path.isfile(module_path)
+        module_path = os.path.join(CONTESTS_DIR, path, "module.yaml")
+        if os.path.isfile(module_path):
+            return module_path
+
+        # Check the base name inside contests directory.
+        base_name = os.path.basename(path)
+        module_path = os.path.join(CONTESTS_DIR, base_name, "module.yaml")
+        if os.path.isfile(module_path):
+            return module_path
+
+        return None
 
     def __init__(self, path, file_cacher):
         """
@@ -402,13 +422,9 @@ class IsraelContestLoader(ContestLoader):
         """
         super(IsraelContestLoader, self).__init__(path, file_cacher)
 
-        # Get the module from the given path, inside the contests directory
-        # if needed.
-        module_path = os.path.join(path, "module.yaml")
-        if not os.path.isfile(module_path):
-            module_path = os.path.join(CONTESTS_DIR, module_path)
-
-        self.contest_dir = os.path.dirname(os.path.abspath(module_path))
+        # Get the module from the given path.
+        module_path = IsraelContestLoader.get_module_path(path)
+        self.contest_dir = os.path.dirname(module_path)
 
         with open(module_path) as stream:
             self.params = yaml.safe_load(stream)
