@@ -465,12 +465,14 @@ class IsraelContestLoader(ContestLoader):
         args["max_user_test_number"] = self.params["max_user_test_number"]
 
         interval_seconds = self.params["min_submission_interval"]
-        delta = timedelta(seconds=interval_seconds)
-        args["min_submission_interval"] = delta
+        if interval_seconds is not None:
+            delta = timedelta(seconds=interval_seconds)
+            args["min_submission_interval"] = delta
 
         interval_seconds = self.params["min_user_test_interval"]
-        delta = timedelta(seconds=interval_seconds)
-        args["min_user_test_interval"] = delta
+        if interval_seconds is not None:
+            delta = timedelta(seconds=interval_seconds)
+            args["min_user_test_interval"] = delta
 
         return Contest(**args)
 
