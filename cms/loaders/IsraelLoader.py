@@ -17,7 +17,7 @@ import yaml
 
 from cms import SCORE_MODE_MAX
 from cms.db import Contest, User, Task, Statement, \
-    SubmissionFormatElement, Dataset, Manager, Testcase
+    SubmissionFormatElement, Dataset, Manager, Testcase, Attachment
 from cmscontrib.loaders.base_loader import ContestLoader, TaskLoader, \
     UserLoader
 
@@ -64,6 +64,7 @@ class IsraelTaskLoader(TaskLoader):
         if get_statement:
             self.put_statements(args)
         self.put_score_mode(args)
+        self.put_attachments(args)
 
     def put_names(self, args):
         """
@@ -98,6 +99,19 @@ class IsraelTaskLoader(TaskLoader):
         Currently we only use the best submission (max score).
         """
         args["score_mode"] = SCORE_MODE_MAX
+
+    def put_attachments(self, args):
+        """
+        Create Attachment objects and put them in the given args.
+        """
+        args["attachments"] = []
+        attachment_paths = self.processor.get_attachments()
+        for path in attachment_paths:
+            base_name = os.path.basename(path)
+            description = "Attachment %s for task %s" % \
+                          (base_name, self.short_name)
+            digest = self.file_cacher.put_file_from_path(path, description)
+            args["attachments"] += [Attachment(base_name, digest)]
 
     def task_has_changed(self):
         """
