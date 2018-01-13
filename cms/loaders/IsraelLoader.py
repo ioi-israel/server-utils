@@ -12,6 +12,7 @@ from __future__ import unicode_literals
 
 from datetime import timedelta
 import json
+import logging
 import os
 import yaml
 
@@ -24,6 +25,8 @@ from cmscontrib.loaders.base_loader import ContestLoader, TaskLoader, \
 from server_utils.config import CONTESTS_DIR, TASKS_DIR, USERS_FILE, \
     time_from_str
 from task_utils.processing.TaskProcessor import TaskProcessor
+
+logger = logging.getLogger(__name__)
 
 
 class IsraelTaskLoader(TaskLoader):
@@ -60,6 +63,9 @@ class IsraelTaskLoader(TaskLoader):
         self.task_contest_info = task_contest_info
         self.short_name = task_contest_info["short_name"]
 
+        logger.info("Instantiating task loader for %s with path %s",
+                    self.short_name, path)
+
         self.post_gen_dir = os.path.join(path, "auto.gen")
         module_path = os.path.join(self.post_gen_dir, "module.yaml")
         self.processor = TaskProcessor(module_path, path, post_gen_dir=None)
@@ -70,6 +76,8 @@ class IsraelTaskLoader(TaskLoader):
         self.graders = self.processor.get_graders()
         self.headers = self.processor.get_headers()
         self.managers = self.processor.get_managers()
+
+        logger.info("Fetched data from TaskProcessor.")
 
     def get_task(self, get_statement):
         """
