@@ -486,7 +486,7 @@ class IsraelContestLoader(ContestLoader):
         """
         See docstring in base_loader.
         """
-        raise NotImplementedError("Please extend ContestLoader")
+        return True
 
     @staticmethod
     def get_participations_info():
