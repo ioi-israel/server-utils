@@ -60,9 +60,16 @@ class IsraelTaskLoader(TaskLoader):
         self.task_contest_info = task_contest_info
         self.short_name = task_contest_info["short_name"]
 
-        post_gen_dir = os.path.join(path, "auto.gen")
-        module_path = os.path.join(post_gen_dir, "module.yaml")
+        self.post_gen_dir = os.path.join(path, "auto.gen")
+        module_path = os.path.join(self.post_gen_dir, "module.yaml")
         self.processor = TaskProcessor(module_path, path, post_gen_dir=None)
+        self.subtasks = self.processor.get_subtasks()
+        self.task_type = self.processor.get_task_type()
+        self.has_checker = self.processor.has_checker()
+        self.has_grader = self.processor.has_grader()
+        self.graders = self.processor.get_graders()
+        self.headers = self.processor.get_headers()
+        self.managers = self.processor.get_managers()
 
     def get_task(self, get_statement):
         """
@@ -74,6 +81,7 @@ class IsraelTaskLoader(TaskLoader):
         if get_statement:
             self.put_statements(args)
         self.put_score_mode(args)
+        self.put_task_submission_format(args)
         self.put_attachments(args)
 
         task = Task(**args)
@@ -114,6 +122,14 @@ class IsraelTaskLoader(TaskLoader):
         """
         args["score_mode"] = SCORE_MODE_MAX
 
+    def put_task_submission_format(self, args):
+        """
+        Put the task's submission format in the given args.
+        This is just a placeholder, overridden by the dataset
+        submission format.
+        """
+        args["submission_format"] = [SubmissionFormatElement("Task.%l")]
+
     def put_attachments(self, args):
         """
         Create Attachment objects and put them in the given args.
@@ -131,10 +147,145 @@ class IsraelTaskLoader(TaskLoader):
         """
         Create the main dataset for this task.
         """
+
         args = {}
-        args["task"] = task
-        # TODO
+        self.put_dataset_basic_info(args, task)
+        self.put_dataset_limits(args)
+        self.put_dataset_score_type(args)
+        self.put_dataset_type_parameters(args)
+        self.put_dataset_managers(args)
+        self.put_dataset_testcases(args)
+
         return Dataset(**args)
+
+    def put_dataset_basic_info(self, args, task):
+        """
+        Put the basic dataset info in the given args:
+        task, type, description, autojudge.
+        """
+        args["task"] = task
+        args["task_type"] = self.task_type
+        args["description"] = "Default"
+        args["autojudge"] = False
+
+    def put_dataset_limits(self, args):
+        """
+        Put the time and memory limits in the given args.
+        """
+        args["time_limit"] = self.processor.get_time()
+        args["memory_limit"] = self.processor.get_memory()
+
+    def put_dataset_score_type(self, args):
+        """
+        Put the score type parameters in the given args.
+        """
+        # The subtask structure is used for the score type parameters.
+        # Each item in the list is of the form [score, num_testcases].
+        # For example: [[10, 5], [90, 20]]
+        subtask_structure = []
+        for subtask in self.subtasks:
+            subtask_structure += [subtask["score"], len(subtask["testcases"])]
+        args["score_type_parameters"] = json.dumps(subtask_structure)
+
+        # The score type is always "GroupMin". See CMS documentation.
+        args["score_type"] = "GroupMin"
+
+    def put_dataset_type_parameters(self, args):
+        """
+        Put the task type parameters in the given args.
+        """
+
+        if self.has_checker:
+            comparator_str = "comparator"
+        else:
+            comparator_str = "diff"
+
+        if self.has_grader:
+            grader_str = "grader"
+        else:
+            grader_str = "alone"
+
+        if self.task_type == "Batch":
+            # Batch type expects the first parameter to be "grader" or
+            # "alone"; the second parameter to have input/output file names
+            # (we leave them empty to use stdin/stdout); the third parameter
+            # is "comparator" or "diff".
+            result = [grader_str, ["", ""], comparator_str]
+
+        elif self.task_type in ("OutputOnly", "TwoSteps"):
+            # OutputOnly and TwoSteps only expect the comparator info.
+            result = [comparator_str]
+
+        else:
+            raise Exception("Unknown task type: %s" % self.task_type)
+
+        args["task_type_parameters"] = json.dumps(result)
+
+    def put_dataset_managers(self, args):
+        """
+        Put the task managers in the given args.
+        Managers are all files related to the user's compilation and execution:
+        checker, graders, headers, and manager.cpp (for TwoSteps).
+        """
+        args["managers"] = []
+
+        for grader_path in self.graders:
+            base_name = os.path.basename(grader_path)
+            description = "Grader for task %s" % self.short_name
+            digest = self.file_cacher.put_file_from_path(grader_path,
+                                                         description)
+            args["managers"] += [Manager(base_name, digest)]
+
+        for header_path in self.headers:
+            base_name = os.path.basename(header_path)
+            description = "Header for task %s" % self.short_name
+            digest = self.file_cacher.put_file_from_path(header_path,
+                                                         description)
+            args["managers"] += [Manager(base_name, digest)]
+
+        for manager_path in self.managers:
+            base_name = os.path.basename(manager_path)
+            description = "Manager for task %s" % self.short_name
+            digest = self.file_cacher.put_file_from_path(manager_path,
+                                                         description)
+            args["managers"] += [Manager(base_name, digest)]
+
+        if self.has_checker:
+            checker_path = os.path.join(self.post_gen_dir, "checker")
+            description = "Manager for task %s" % self.short_name
+            digest = self.file_cacher.put_file_from_path(checker_path,
+                                                         description)
+            args["managers"] += [Manager("checker", digest)]
+
+    def put_dataset_testcases(self, args):
+        """
+        Put the task's testcases in the given args.
+        """
+        args["testcases"] = []
+
+        total_testcase_index = 0
+        for (subtask_index, subtask) in enumerate(self.subtasks):
+            for (testcase_index, testcase) in enumerate(subtask["testcases"]):
+                input_path = testcase["input"]
+                output_path = testcase["output"]
+
+                input_desc = "Input %02d.%02d for task %s" % \
+                             (subtask_index, testcase_index, self.short_name)
+                output_desc = "Output %02d.%02d for task %s" % \
+                              (subtask_index, testcase_index, self.short_name)
+
+                input_digest = self.file_cacher.put_file_from_path(
+                    input_path, input_desc)
+                output_digest = self.file_cacher.put_file_from_path(
+                    output_path, output_desc)
+
+                codename = "%03d" % total_testcase_index
+
+                args["testcases"] += [
+                    Testcase(codename, True, input_digest, output_digest)
+                ]
+
+                total_testcase_index += 1
 
     def task_has_changed(self):
         """
