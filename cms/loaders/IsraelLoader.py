@@ -192,7 +192,7 @@ class IsraelTaskLoader(TaskLoader):
         # For example: [[10, 5], [90, 20]]
         subtask_structure = []
         for subtask in self.subtasks:
-            subtask_structure += [subtask["score"], len(subtask["testcases"])]
+            subtask_structure += [[subtask["score"], len(subtask["testcases"])]]
         args["score_type_parameters"] = json.dumps(subtask_structure)
 
         # The score type is always "GroupMin". See CMS documentation.
