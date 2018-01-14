@@ -18,6 +18,40 @@ class TaskSandbox(object):
     """
 
     @staticmethod
+    def execute(task_dir, gen_dir=None):
+        """
+        Initialize the sandbox, run the processor in it, and clean up.
+        Raise an exception on failure.
+
+        If gen_dir is not given, it is assumed to be "auto.gen" inside
+        task_dir. In any case, it is created if it doesn't exist,
+        and it is given full permissions (777).
+        """
+
+        if not os.path.isdir(task_dir):
+            raise Exception("Task directory not found: %s" % task_dir)
+
+        if gen_dir is None:
+            gen_dir = os.path.join(task_dir, "auto.gen")
+
+        if not os.path.isdir(gen_dir):
+            os.mkdir(gen_dir)
+
+        os.chmod(gen_dir, 0777)
+
+        # The caller needs to handle any exceptions from initializing.
+        TaskSandbox._init_isolate()
+
+        # We want the caller to handle any exceptions from the execution
+        # as well, so we don't catch, but we clean up before returning.
+        try:
+            TaskSandbox._execute_isolate(task_dir, gen_dir)
+        finally:
+            # Clean up. Note if both execution and cleaning up fail,
+            # then only the clean up exception will be passed on.
+            TaskSandbox._cleanup_isolate()
+
+    @staticmethod
     def _run(commands, input_text=""):
         """
         Run the given commands as a subprocess, without giving it
@@ -31,7 +65,7 @@ class TaskSandbox(object):
         return (process.returncode, stdout, stderr)
 
     @staticmethod
-    def init():
+    def _init_isolate():
         """
         Initialize the sandbox. Raise an exception on failure.
         """
@@ -45,7 +79,7 @@ class TaskSandbox(object):
                             (return_code, stdout, stderr))
 
     @staticmethod
-    def cleanup():
+    def _cleanup_isolate():
         """
         Cleanup the sandbox. Raise an exception on failure.
         """
@@ -59,7 +93,7 @@ class TaskSandbox(object):
                             (return_code, stdout, stderr))
 
     @staticmethod
-    def execute(task_dir, gen_dir):
+    def _execute_isolate(task_dir, gen_dir):
         """
         Run the processor in the sandbox. The given gen_dir must be
         writable by all. Raise an exception on failure.
@@ -137,25 +171,9 @@ def main():
                              "task_dir/auto.gen by default.")
     args = parser.parse_args()
 
-    # Verify task directory.
-    task_dir = args.task_dir
-    if not os.path.isdir(task_dir):
-        parser.error("Task directory not found: %s" % task_dir)
+    # Executing may result in an exception, which we want the caller to handle.
+    TaskSandbox.execute(args.task_dir, args.gen_dir)
 
-    # Verify or create generation directory.
-    gen_dir = args.gen_dir
-    if gen_dir is None:
-        gen_dir = os.path.join(task_dir, "auto.gen")
-        if not os.path.exists(gen_dir):
-            os.mkdir(gen_dir)
-            os.chmod(gen_dir, 0777)
-    else:
-        if not os.path.isdir(gen_dir):
-            parser.error("Generation directory not found: %s" % gen_dir)
-
-    TaskSandbox.init()
-    TaskSandbox.execute(task_dir, gen_dir)
-    TaskSandbox.cleanup()
     return 0
 
 
