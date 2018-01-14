@@ -19,6 +19,7 @@ with open(_CONFIG_FILE_PATH) as stream:
 TASKS_DIR = _CONFIG["paths"]["tasks_dir"]
 CONTESTS_DIR = _CONFIG["paths"]["contests_dir"]
 USERS_FILE = _CONFIG["paths"]["users_file"]
+REQUESTS_DIR = _CONFIG["paths"]["requests_dir"]
 
 # Expose constants.
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"

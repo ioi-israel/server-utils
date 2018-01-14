@@ -1,0 +1,10 @@
+# Requests for procesing and importing tasks are issued by placing
+# a file in this format in the requests directory (specified in config).
+# The request's file name should have useful logging/debugging information,
+# including a timestamp.
+
+# The developer who pushed.
+user: "joe"
+
+# The updated repository path.
+repo: "devs/joe/repo"
