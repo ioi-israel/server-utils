@@ -4,7 +4,7 @@
 Server configuration, constants and functionality.
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import yaml
 
@@ -16,12 +16,16 @@ with open(_CONFIG_FILE_PATH) as stream:
     _CONFIG = yaml.safe_load(stream)
 
 # Expose paths.
+CLONE_DIR = _CONFIG["paths"]["clone_dir"]
 TASKS_DIR = _CONFIG["paths"]["tasks_dir"]
 CONTESTS_DIR = _CONFIG["paths"]["contests_dir"]
 USERS_FILE = _CONFIG["paths"]["users_file"]
 REQUESTS_DIR = _CONFIG["paths"]["requests_dir"]
+LOCK_FILE = _CONFIG["paths"]["lock_file"]
 
 # Expose constants.
+LOCK_LIFETIME = timedelta(seconds=_CONFIG["locks"]["lifetime"])
+LOCK_TIMEOUT = timedelta(seconds=_CONFIG["locks"]["timeout"])
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
