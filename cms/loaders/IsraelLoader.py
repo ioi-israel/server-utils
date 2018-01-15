@@ -22,8 +22,7 @@ from cms.db import Contest, User, Task, Statement, \
 from cmscontrib.loaders.base_loader import ContestLoader, TaskLoader, \
     UserLoader
 
-from server_utils.config import CONTESTS_DIR, TASKS_DIR, USERS_FILE, \
-    time_from_str
+from server_utils.config import CLONE_DIR, USERS_FILE, time_from_str
 from task_utils.processing.TaskProcessor import TaskProcessor
 
 logger = logging.getLogger(__name__)
@@ -432,14 +431,14 @@ class IsraelContestLoader(ContestLoader):
         if os.path.isfile(module_path):
             return module_path
 
-        # Check the given path inside contests directory.
-        module_path = os.path.join(CONTESTS_DIR, path, "module.yaml")
+        # Check the given path inside the clone directory.
+        module_path = os.path.join(CLONE_DIR, path, "module.yaml")
         if os.path.isfile(module_path):
             return module_path
 
-        # Check the base name inside contests directory.
+        # Check the base name inside the clone directory.
         base_name = os.path.basename(path)
-        module_path = os.path.join(CONTESTS_DIR, base_name, "module.yaml")
+        module_path = os.path.join(CLONE_DIR, base_name, "module.yaml")
         if os.path.isfile(module_path):
             return module_path
 
@@ -473,7 +472,7 @@ class IsraelContestLoader(ContestLoader):
             raise Exception("Task %s not found in contest %s." %
                             (taskname, self.contest_dir))
 
-        task_path = os.path.join(TASKS_DIR, task_info["path"])
+        task_path = os.path.join(CLONE_DIR, task_info["path"])
         return IsraelTaskLoader(task_path, self.file_cacher, task_info)
 
     def get_contest(self):
