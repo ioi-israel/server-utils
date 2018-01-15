@@ -123,8 +123,13 @@ class SafeUpdater(object):
         Tasks that exist in the contest and are not yet cloned,
         are cloned and generated.
 
+        The contest repository itself is updated (cloned if needed).
+
         Raise an exception on failure.
         """
+
+        # Update/clone contest.
+        self.update_repo(repo, allow_clone=True)
 
         # Get contest module.
         repo_path = os.path.abspath(os.path.join(CLONE_DIR, repo))
