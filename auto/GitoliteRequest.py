@@ -13,13 +13,16 @@ GL_USER: The gitolite user who pushed.
 GL_REPO: The full name of the repository, including slashes.
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import sys
 import yaml
+import flufl.lock
 
 
 _requests_dir = "/var/lib/gitolite3/requests"
+_lock_lifetime = timedelta(seconds=3)
+_lock_timeout = timedelta(seconds=10)
 
 
 def main():
@@ -54,11 +57,30 @@ def main():
     except Exception:
         return 3
 
+    lock_path = os.path.join(_requests_dir, ".lock")
+    lock = flufl.lock.Lock(lock_path, lifetime=_lock_lifetime)
+
+    # Try to acquire the lock with the defined timeout.
+    # We don't use "with lock" because then we can't define custom timeout.
+    try:
+        lock.lock(timeout=_lock_timeout)
+    except Exception:
+        return 4
+
+    # Try to write the file. Clean up the lock in any case.
     try:
         with open(request_path, "w") as stream:
             stream.write(yaml_info)
     except Exception:
-        return 4
+        return 5
+    finally:
+        try:
+            lock.unlock()
+        except Exception:
+            # This can happen if the lock expired.
+            # We don't care about this for now, because it shouldn't
+            # take so much time to write the YAML.
+            pass
 
     return 0
 
