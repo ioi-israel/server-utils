@@ -24,6 +24,8 @@ LOCK_FILE = _CONFIG["paths"]["lock_file"]
 # Expose constants.
 LOCK_LIFETIME = timedelta(seconds=_CONFIG["locks"]["lifetime"])
 LOCK_TIMEOUT = timedelta(seconds=_CONFIG["locks"]["timeout"])
+REQUEST_COOLING = _CONFIG["requests"]["cooling_period"]
+ACTIVE_CONTESTS = _CONFIG["requests"]["active_contests"]
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 

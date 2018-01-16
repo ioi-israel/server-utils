@@ -7,3 +7,7 @@ paths:
 locks:
   lifetime: 3600
   timeout: 150
+
+requests:
+  cooling_period: 15
+  active_contests: ["contests/testing"]
