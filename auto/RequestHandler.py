@@ -72,7 +72,7 @@ class RequestHandler(pyinotify.ProcessEvent):
         # See pyinotify documentation.
         # We use self as the EventHandler.
         wm = pyinotify.WatchManager()
-        mask = pyinotify.IN_CREATE
+        mask = pyinotify.IN_CLOSE_WRITE
         notifier = pyinotify.Notifier(wm, self)
         wm.add_watch(self.dir, mask)
         logger.info("Watching directory forever...")
