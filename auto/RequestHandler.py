@@ -56,7 +56,6 @@ class RequestHandler(pyinotify.ProcessEvent):
         This method is called by ProcessEvent class, see pyinotify
         documentation.
         """
-        super(RequestHandler, self).__init__()
 
         logger.info("Initializing RequestHandler for directory %s", _dir)
         self.dir = os.path.abspath(_dir)
