@@ -86,6 +86,9 @@ class RequestHandler(pyinotify.ProcessEvent):
         Prints errors on failure.
         """
         logger.info("Observed new file: %s", os.path.basename(event.pathname))
+        if not event.pathname.endswith(".yaml"):
+            logger.info("Ignoring it (not yaml).")
+            return
         self.handle_existing_requests()
 
     def handle_existing_requests(self):
