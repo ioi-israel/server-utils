@@ -39,6 +39,10 @@ def main():
     if not repo or not user:
         return 2
 
+    # Admin repository doesn't trigger requests.
+    if repo == "gitolite-admin":
+        return 0
+
     # When receiving an update from developer "joe" to the repository
     # devs/joe/repo, The request name is going to be in this format:
     # 2000-01-01.10.00.00_joe_devs.joe.repo.yaml
