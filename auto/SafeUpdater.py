@@ -114,22 +114,24 @@ class SafeUpdater(object):
 
         TaskSandbox.execute(repo_path, gen_dir=gen_dir)
 
-    def update_contest(self, repo):
+    def update_contest(self, repo, update, generate_new):
         """
         Update a contest and its tasks on the database.
         This should be done after generating newly updated tasks
         with TaskSandbox, in order to update CMS.
 
         Tasks that exist in the contest and are not yet cloned,
-        are cloned and generated.
+        are cloned and generated, if generate_new is true.
 
-        The contest repository itself is updated (cloned if needed).
+        The contest repository itself is updated (cloned if needed),
+        if update is true.
 
         Raise an exception on failure.
         """
 
         # Update/clone contest.
-        self.update_repo(repo, allow_clone=True)
+        if update:
+            self.update_repo(repo, allow_clone=True)
 
         # Get contest module.
         repo_path = os.path.abspath(os.path.join(CLONE_DIR, repo))
@@ -139,12 +141,14 @@ class SafeUpdater(object):
         with open(module_path) as stream:
             contest_params = yaml.safe_load(stream)
 
-        # Clone and generate tasks that are not yet present.
-        for task in contest_params["tasks"]:
-            task_repo = task["path"]
-            task_path = os.path.join(CLONE_DIR, task_repo)
-            if not os.path.isdir(task_path):
-                self.generate_task(task_repo, update=True, allow_clone=True)
+        if generate_new:
+            # Clone and generate tasks that are not yet present.
+            for task in contest_params["tasks"]:
+                task_repo = task["path"]
+                task_path = os.path.join(CLONE_DIR, task_repo)
+                if not os.path.isdir(task_path):
+                    self.generate_task(task_repo, update=True,
+                                       allow_clone=True)
 
         # Note: cmsImportContest drops participations when updating
         # a contest. It is important not to give the --update-contest flag.
