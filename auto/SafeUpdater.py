@@ -174,11 +174,13 @@ class SafeUpdater(object):
 
         # If the users repository is not cloned yet, there will be
         # no old users. Otherwise, get them from the file.
-        old_users = []
+        old_users = None
         if os.path.isfile(USERS_FILE):
             with open(USERS_FILE) as stream:
                 old_users = yaml.safe_load(stream)
 
+        if not isinstance(old_users, list):
+            old_users = []
         old_username_set = set(user["username"] for user in old_users)
 
         # Update/clone the users repository and get all users.
