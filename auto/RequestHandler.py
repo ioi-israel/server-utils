@@ -80,13 +80,12 @@ class RequestHandler(pyinotify.ProcessEvent):
 
     def process_IN_CLOSE_WRITE(self, event):
         """
-        Handle the event of a new request being created. Note we need its
+        Handle the event of a new file being written. Note we need its
         content, so we must wait for "IN_CLOSE_WRITE" rather than "IN_CREATE".
         Invokes handle_existing_requests.
         Prints errors on failure.
         """
-        request_name = os.path.basename(event.pathname)
-        logger.info("Received new request: %s", request_name)
+        logger.info("Observed new file: %s", os.path.basename(event.pathname))
         self.handle_existing_requests()
 
     def handle_existing_requests(self):
@@ -99,8 +98,9 @@ class RequestHandler(pyinotify.ProcessEvent):
 
         logger.info("Going to handle all existing requests.")
 
-        # Get all files, convert to full paths, filter by existence, and sort.
+        # Get all files, convert to full paths, filter by relevance, and sort.
         files_list = os.listdir(self.dir)
+        files_list = [name for name in files_list if name.endswith(".yaml")]
         files_list = [os.path.join(self.dir, name) for name in files_list]
         files_list = filter(os.path.isfile, files_list)
         files_list.sort()
