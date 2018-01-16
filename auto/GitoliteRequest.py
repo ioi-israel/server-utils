@@ -15,6 +15,7 @@ GL_REPO: The full name of the repository, including slashes.
 
 from datetime import datetime, timedelta
 import os
+import stat
 import sys
 import yaml
 import flufl.lock
@@ -75,6 +76,9 @@ def main():
     try:
         with open(request_path, "w") as stream:
             stream.write(yaml_info)
+
+        # File must readable and writable for RequestHandler.
+        os.chmod(request_path, stat.S_IRGRP | stat.S_IWGRP)
     except Exception:
         return 5
     finally:
