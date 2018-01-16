@@ -17,7 +17,7 @@ import yaml
 from flufl.lock import Lock
 
 from server_utils.config import LOCK_FILE, LOCK_LIFETIME, LOCK_TIMEOUT, \
-    CLONE_DIR
+    CLONE_DIR, USERS_FILE
 from server_utils.tasks.TaskSandbox import TaskSandbox
 
 
@@ -114,7 +114,7 @@ class SafeUpdater(object):
 
         TaskSandbox.execute(repo_path, gen_dir=gen_dir)
 
-    def update_contest(self, repo, update, generate_new):
+    def update_contest(self, repo, update, generate_new, update_users):
         """
         Update a contest and its tasks on the database.
         This should be done after generating newly updated tasks
@@ -126,8 +126,15 @@ class SafeUpdater(object):
         The contest repository itself is updated (cloned if needed),
         if update is true.
 
+        If update_users is true, then self.update_users is called
+        before everything else.
+
         Raise an exception on failure.
         """
+
+        # Update/clone users.
+        if update_users:
+            self.update_users()
 
         # Update/clone contest.
         if update:
@@ -156,6 +163,39 @@ class SafeUpdater(object):
                          "--import-tasks",
                          "--update-tasks",
                          repo_path])
+
+    def update_users(self):
+        """
+        Update the users repository. Read the config users file and
+        add new users to the database. Note: this never deletes users.
+
+        Raise an exception on failure.
+        """
+
+        # If the users repository is not cloned yet, there will be
+        # no old users. Otherwise, get them from the file.
+        old_users = []
+        if os.path.isfile(USERS_FILE):
+            with open(USERS_FILE) as stream:
+                old_users = yaml.safe_load(stream)
+
+        old_username_set = set(user["username"] for user in old_users)
+
+        # Update/clone the users repository and get all users.
+        self.update_repo("users", allow_clone=True)
+        with open(USERS_FILE) as stream:
+            all_users = yaml.safe_load(stream)
+
+        # For every user that didn't exist previously, add it to CMS.
+        for user in all_users:
+            if user["username"] in old_username_set:
+                continue
+            SafeUpdater.run(["cmsAddUser",
+                             user["first_name"],
+                             user["last_name"],
+                             user["username"],
+                             "-p",
+                             user["password"]])
 
     def __enter__(self):
         """
