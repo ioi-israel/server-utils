@@ -15,7 +15,6 @@ GL_REPO: The full name of the repository, including slashes.
 
 from datetime import datetime, timedelta
 import os
-import stat
 import sys
 import yaml
 import flufl.lock
@@ -62,6 +61,12 @@ def main():
     except Exception:
         return 3
 
+    # Both the lock file and the request need to be readable and writable
+    # by the group, but git/gitolite impose a umask. We change it explicitly.
+    # Reference:
+    # https://stackoverflow.com/questions/11574271/git-change-
+    # default-umask-when-update-file
+    os.umask(0002)
     lock_path = os.path.join(_requests_dir, ".lock")
     lock = flufl.lock.Lock(lock_path, lifetime=_lock_lifetime)
 
@@ -76,9 +81,6 @@ def main():
     try:
         with open(request_path, "w") as stream:
             stream.write(yaml_info)
-
-        # File must readable and writable for RequestHandler.
-        os.chmod(request_path, stat.S_IRGRP | stat.S_IWGRP)
     except Exception:
         return 5
     finally:
