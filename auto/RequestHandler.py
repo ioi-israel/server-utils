@@ -336,6 +336,7 @@ def main():
     then listen for requests forever.
     """
     handler = RequestHandler()
+    handler.handle_existing_requests()
     handler.watch_forever()
     return 0
 
