@@ -1,5 +1,5 @@
 paths:
-  repo_base: "/home/ioi/cms-data"
+  clone_dir: "/home/ioi/cms-data"
   users_file: "/home/ioi/cms-data/users/users-2018.yaml"
   requests_dir: "/var/lib/gitolite3/requests"
   lock_file: "/home/ioi/cms-data/.lock"
