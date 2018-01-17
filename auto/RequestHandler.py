@@ -185,15 +185,20 @@ class RequestHandler(pyinotify.ProcessEvent):
         Raise an exception on failure.
         """
 
-        # Contests are updated only if they are active.
+        # All contests are cloned, but they are only put in the database
+        # if they are active.
         if repo_type == "contests":
+            logger.info("Updating contest %s on disk...", repo)
+            updater.update_repo(repo, allow_clone=True)
+            logger.info("Updated contest %s on disk.", repo)
+
             if repo in self.contests:
-                logger.info("Updating contest %s...", repo)
+                logger.info("Updating contest %s in database...", repo)
                 updater.update_contest(repo, update=True, generate_new=True,
                                        update_users=True)
-                logger.info("Updated contest %s", repo)
+                logger.info("Updated contest %s in database.", repo)
             else:
-                logger.warning("Not updating contest %s "
+                logger.warning("Not updating contest %s in database "
                                "because it is not active.", repo)
             return
 
