@@ -20,12 +20,11 @@ tasks:
     long_name:  "My Task 2"
     path:       "my_task2_dir"
 
-# List of allowed languages. Options are C++ ("cpp"), Java ("java")
-# and C# ("cs").
+# List of allowed languages. Options: "C++11 / g++", "Java / JDK", "C# / MCS".
 languages:
-  - "cpp"
-  - "cs"
-  - "java"
+  - "C++11 / g++"
+  - "Java / JDK"
+  - "C# / MCS"
 
 # Global limitations. Intervals are measured in seconds.
 # null signifies no limitation.
