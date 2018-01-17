@@ -158,10 +158,13 @@ class SafeUpdater(object):
                                        allow_clone=True)
 
         # Note: cmsImportContest drops participations when updating
-        # a contest. It is important not to give the --update-contest flag.
+        # a contest. We can give the --update-contest flag because
+        # our cmsImportContest script was modified to ignore
+        # participations. See issue #775.
         SafeUpdater.run(["cmsImportContest",
                          "--import-tasks",
                          "--update-tasks",
+                         "--update-contest",
                          repo_path])
 
     def update_users(self):
