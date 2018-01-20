@@ -33,6 +33,6 @@ def time_from_str(time_str, str_format=TIME_FORMAT):
     """
     Convert the given string to a datetime object.
     By default, accepts the time format constant above, e.g.:
-    "2000-01-01 10:00"
+    "2000-01-01 10:00:00"
     """
     return datetime.strptime(time_str, str_format)
