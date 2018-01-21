@@ -17,12 +17,11 @@ import os
 import yaml
 
 from cms import SCORE_MODE_MAX
-from cms.db import Contest, User, Task, Statement, \
+from cms.db import Contest, Task, Statement, \
     SubmissionFormatElement, Dataset, Manager, Testcase, Attachment
-from cmscontrib.loaders.base_loader import ContestLoader, TaskLoader, \
-    UserLoader
+from cmscontrib.loaders.base_loader import ContestLoader, TaskLoader
 
-from server_utils.config import CLONE_DIR, USERS_FILE, time_from_str
+from server_utils.config import CLONE_DIR, time_from_str
 from task_utils.processing.TaskProcessor import TaskProcessor
 
 logger = logging.getLogger(__name__)
@@ -324,79 +323,6 @@ class IsraelTaskLoader(TaskLoader):
         return True
 
 
-class IsraelUserLoader(UserLoader):
-    """
-    See docstring in base_loader.
-
-    We assume all users are in the global users file, see config.yaml.
-    We take loading a "path" to mean loading a username.
-    """
-
-    @staticmethod
-    def detect(path):
-        """
-        See docstring in base_loader.
-
-        We abuse the path argument to mean username.
-        """
-        username = path
-        return IsraelUserLoader._get_user_info(username) is not None
-
-    @staticmethod
-    def _get_user_info(username):
-        """
-        Get info about the given user from the global users file.
-        If not a valid user, return None.
-
-        If it is a valid user, return a dictionary with keys:
-        username, password, first_name, last_name.
-        Other keys in the users file are ignored.
-        """
-
-        with open(USERS_FILE) as stream:
-            users_list = yaml.safe_load(stream)
-
-        for user_dict in users_list:
-            if user_dict["username"] == username:
-                return {
-                    "username": username,
-                    "password": user_dict["password"],
-                    "first_name": user_dict["first_name"],
-                    "last_name": user_dict["last_name"]
-                }
-        return None
-
-    def __init__(self, path, file_cacher):
-        """
-        See docstring in base_loader.
-
-        We abuse the path argument to mean username.
-        """
-        super(IsraelUserLoader, self).__init__(path, file_cacher)
-        self.username = path
-        self.user_info = IsraelUserLoader._get_user_info(self.username)
-
-    def get_user(self):
-        """
-        See docstring in base_loader.
-        """
-        return User(**self.user_info)
-
-    def user_has_changed(self):
-        """
-        See docstring in base_loader.
-        """
-        return True
-
-    def get_task_loader(self, taskname):
-        """
-        This method is only implemented in the contest loader,
-        it is here for linting, because BaseLoader defines it as abstract.
-        """
-        raise NotImplementedError("IsraelUserLoader does not provide "
-                                  "get_task_loader")
-
-
 class IsraelContestLoader(ContestLoader):
     """
     Load a contest in Israel YAML format.
@@ -480,7 +406,7 @@ class IsraelContestLoader(ContestLoader):
         See docstring in base_loader.
         """
         contest = self.get_contest_object()
-        participations = IsraelContestLoader.get_participations_info()
+        participations = self.get_participations_info()
         tasks = self.get_tasks_list()
         return contest, tasks, participations
 
@@ -529,15 +455,16 @@ class IsraelContestLoader(ContestLoader):
         """
         return True
 
-    @staticmethod
-    def get_participations_info():
+    def get_participations_info(self):
         """
         To create a participation, we need two fields:
         a username, and whether the user is hidden.
 
         Passwords are ignored, since we don't use contest-specific passwords.
         """
-        with open(USERS_FILE) as stream:
+
+        users_file = os.path.join(CLONE_DIR, self.params["users_file"])
+        with open(users_file) as stream:
             users_list = yaml.safe_load(stream)
 
         result = []

@@ -169,15 +169,21 @@ class RequestHandler(pyinotify.ProcessEvent):
         """
         Process an update safely with the given SafeUpdater.
 
-        Tasks and contests that are not related to the active contests
-        are ignored. When an active contest is given, it is updated via
-        SafeUpdater.update_contest, and its users are updated as well.
+        When an active contest is given, it is updated via
+        SafeUpdater.update_contest. Its users are updated (which means
+        the users repository is updated). If any of its tasks are not
+        yet cloned, they are cloned and generated.
+
+        When an inactive contest is given, it is only cloned. The database
+        is not affected.
+
+        When an inactive task is given, nothing happens.
 
         When a task inside an active contest is given, it is generated
-        via SafeUpdater.generate_task, and then its contest is updated.
+        via SafeUpdater.generate_task, and then the relevant contests are
+        updated.
 
-        When the users repository is given, users are updated via
-        SafeUpdater.update_users, and then all active contests as well.
+        When the users repository is given, all active contests are updated.
 
         Raise an exception on failure.
         """
@@ -200,16 +206,11 @@ class RequestHandler(pyinotify.ProcessEvent):
             return
 
         if repo_type == "users":
-            logger.info("Updating users repository...")
-            updater.update_users()
-            logger.info("Updated users repository.")
-            logger.info("Updating all contests to reflect the changed users.")
+            logger.info("Updating users in all contests...")
             for contest in self.contests:
                 logger.info("Updating contest %s...", contest)
-                # Since we have just updated the users, we don't need to
-                # do it again for each contest.
                 updater.update_contest(contest, update=True, generate_new=True,
-                                       update_users=False)
+                                       update_users=True)
                 logger.info("Updated contest %s", contest)
             logger.info("Finished updating users and contests.")
             return
@@ -221,7 +222,7 @@ class RequestHandler(pyinotify.ProcessEvent):
                         repo)
             task_contests = self._get_task_contests(repo)
             if not task_contests:
-                logger.info("Skipping task %s, it is not active.", repo)
+                logger.warning("Skipping task %s, it is not active.", repo)
                 return
             logger.info("Task %s is active. Generating...", repo)
             updater.generate_task(repo, update=True, allow_clone=True)

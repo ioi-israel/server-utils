@@ -17,7 +17,6 @@ with open(_CONFIG_FILE_PATH) as stream:
 
 # Expose paths.
 CLONE_DIR = _CONFIG["paths"]["clone_dir"]
-USERS_FILE = _CONFIG["paths"]["users_file"]
 REQUESTS_DIR = _CONFIG["paths"]["requests_dir"]
 LOCK_FILE = _CONFIG["paths"]["lock_file"]
 

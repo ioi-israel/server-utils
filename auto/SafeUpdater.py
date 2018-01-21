@@ -17,7 +17,7 @@ import yaml
 from flufl.lock import Lock
 
 from server_utils.config import LOCK_FILE, LOCK_LIFETIME, LOCK_TIMEOUT, \
-    CLONE_DIR, USERS_FILE
+    CLONE_DIR
 from server_utils.tasks.TaskSandbox import TaskSandbox
 
 
@@ -126,15 +126,12 @@ class SafeUpdater(object):
         The contest repository itself is updated (cloned if needed),
         if update is true.
 
-        If update_users is true, then self.update_users is called
-        before everything else.
+        If update_users is true, the users repository is updated,
+        and the contest's users are updated. Users are never modified
+        or deleted (this requires manual action).
 
         Raise an exception on failure.
         """
-
-        # Update/clone users.
-        if update_users:
-            self.update_users()
 
         # Update/clone contest.
         if update:
@@ -147,6 +144,10 @@ class SafeUpdater(object):
         # Read contest params.
         with open(module_path) as stream:
             contest_params = yaml.safe_load(stream)
+
+        # Update/clone users.
+        if update_users:
+            self.add_new_users(contest_params["users_file"])
 
         if generate_new:
             # Clone and generate tasks that are not yet present.
@@ -167,40 +168,37 @@ class SafeUpdater(object):
                          "--update-contest",
                          repo_path])
 
-    def update_users(self):
+    def add_new_users(self, users_file):
         """
-        Update the users repository. Read the config users file and
-        add new users to the database. Note: this never deletes users.
+        Add the users in the given YAML path to the database.
+        Users that already exist are ignored.
+        This never deletes or modifies existing users.
 
         Raise an exception on failure.
         """
 
-        # If the users repository is not cloned yet, there will be
-        # no old users. Otherwise, get them from the file.
-        old_users = None
-        if os.path.isfile(USERS_FILE):
-            with open(USERS_FILE) as stream:
-                old_users = yaml.safe_load(stream)
-
-        if not isinstance(old_users, list):
-            old_users = []
-        old_username_set = set(user["username"] for user in old_users)
-
-        # Update/clone the users repository and get all users.
+        # Update the users repository.
         self.update_repo("users", allow_clone=True)
-        with open(USERS_FILE) as stream:
-            all_users = yaml.safe_load(stream)
 
-        # For every user that didn't exist previously, add it to CMS.
-        for user in all_users:
-            if user["username"] in old_username_set:
-                continue
-            SafeUpdater.run(["cmsAddUser",
-                             user["first_name"],
-                             user["last_name"],
-                             user["username"],
-                             "-p",
-                             user["password"]])
+        # Get the information from the users file.
+        yaml_path = os.path.join(CLONE_DIR, users_file)
+        with open(yaml_path) as stream:
+            users = yaml.safe_load(stream)
+
+        # Try to insert each user.
+        # The script cmsAddUser returns 1 if the user already exists.
+        for user in users:
+            return_code, stdout, stderr = SafeUpdater.run(
+                ["cmsAddUser", user["first_name"], user["last_name"],
+                 user["username"], "-p", user["password"]],
+                fail_abort=False)
+
+            if return_code not in (0, 1):
+                raise Exception("cmsAddUser failed.\n"
+                                "Return code: %s\n"
+                                "Stdout: %s\n"
+                                "Stderr: %s\n" %
+                                (return_code, stdout, stderr))
 
     def __enter__(self):
         """
