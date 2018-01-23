@@ -114,7 +114,8 @@ class SafeUpdater(object):
 
         TaskSandbox.execute(repo_path, gen_dir=gen_dir)
 
-    def update_contest(self, repo, update, generate_new, update_users):
+    def update_contest(self, repo, update, generate_new, add_users,
+                       update_users):
         """
         Update a contest and its tasks on the database.
         This should be done after generating newly updated tasks
@@ -145,9 +146,9 @@ class SafeUpdater(object):
         with open(module_path) as stream:
             contest_params = yaml.safe_load(stream)
 
-        # Update/clone users.
-        if update_users:
-            self.add_new_users(contest_params["users_file"])
+        # Update/clone users, and add them.
+        if add_users:
+            self.add_new_users(contest_params["users_file"], update_users)
 
         if generate_new:
             # Clone and generate tasks that are not yet present.
@@ -168,17 +169,20 @@ class SafeUpdater(object):
                          "--update-contest",
                          repo_path])
 
-    def add_new_users(self, users_file):
+    def add_new_users(self, users_file, update_repo):
         """
         Add the users in the given YAML path to the database.
         Users that already exist are ignored.
         This never deletes or modifies existing users.
 
+        If update_repo is true, update/clone the users repository first.
+
         Raise an exception on failure.
         """
 
         # Update the users repository.
-        self.update_repo("users", allow_clone=True)
+        if update_repo:
+            self.update_repo("users", allow_clone=True)
 
         # Get the information from the users file.
         yaml_path = os.path.join(CLONE_DIR, users_file)
