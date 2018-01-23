@@ -8,10 +8,14 @@ Use the "with" keyword:
 
     with SafeUpdater() as updater:
         updater.clone_repo("devs/joe/task1")
+
+As a standalone, use the command line arguments described by argparse.
 """
 
+import argparse
 import os
 import subprocess
+import sys
 import yaml
 
 from flufl.lock import Lock
@@ -240,3 +244,38 @@ class SafeUpdater(object):
                             "Stderr: %s\n" %
                             (commands, return_code, stdout, stderr))
         return (return_code, stdout, stderr)
+
+
+def main():
+    """
+    Import/update a contest in the database.
+    This is done with SafeUpdater to avoid race conditions.
+
+    Raise an exception on failure.
+    """
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--contest",
+                        help="contest to import",
+                        required=True)
+    parser.add_argument("--update_repos",
+                        help="update relevant clones",
+                        action="store_true")
+    parser.add_argument("--generate_tasks",
+                        help="generate relevant tasks",
+                        action="store_true")
+    parser.add_argument("--add_users",
+                        help="add contest's users",
+                        action="store_true")
+    args = parser.parse_args()
+
+    with SafeUpdater() as updater:
+        updater.update_contest(args.contest, args.update_repos,
+                               args.generate_tasks, args.add_users,
+                               args.update_repos)
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
