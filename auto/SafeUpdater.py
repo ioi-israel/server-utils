@@ -91,7 +91,10 @@ class SafeUpdater(object):
         old_working_dir = os.getcwd()
         os.chdir(repo_path)
         try:
-            SafeUpdater.run(["git", "pull"])
+            # We want to "git pull" here, except that repositories may have
+            # been updated with force, and we want the newest version.
+            SafeUpdater.run(["git", "fetch", "origin"])
+            SafeUpdater.run(["git", "reset", "--hard", "origin/master"])
         finally:
             os.chdir(old_working_dir)
 
