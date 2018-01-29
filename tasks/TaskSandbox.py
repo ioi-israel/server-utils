@@ -118,17 +118,22 @@ class TaskSandbox(object):
         path_var = "/usr/local/sbin:/usr/local/bin:/usr/sbin:" \
                    "/usr/bin:/sbin:/bin"
 
-        # Path to the TaskProcessor file.
-        # Access to the script's directory is needed to run the .pyc file.
+        # Python path for IOI repositories.
+        # This is expected to be the grandparent of TaskProcessor's directory.
+        # Access to TaskProcessor's directory is needed to run it.
+        # Access to other scripts, like in task_algorithms, may be needed.
         processor_path = os.path.abspath(TaskProcessor.__file__)
         processor_dir = os.path.dirname(processor_path)
+        task_utils_dir = os.path.dirname(processor_dir)
+        python_path = os.path.dirname(task_utils_dir)
 
         flags = [
             "--box-id=90",
             "--cg",
             "--dir=%s" % task_dir,
             "--dir=%s:rw" % gen_dir,
-            "--dir=%s" % processor_dir,
+            "--dir=%s" % python_path,
+            "--env=PYTHONPATH=%s" % python_path,
             "--env=PATH=%s" % path_var,
             "--env=HOME=./",
             "--fsize=%s" % max_files_size,
