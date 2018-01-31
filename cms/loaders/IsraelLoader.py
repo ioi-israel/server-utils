@@ -292,7 +292,6 @@ class IsraelTaskLoader(TaskLoader):
         """
         args["testcases"] = []
 
-        total_testcase_index = 0
         for (subtask_index, subtask) in enumerate(self.subtasks):
             for (testcase_index, testcase) in enumerate(subtask["testcases"]):
                 input_path = testcase["input"]
@@ -308,13 +307,11 @@ class IsraelTaskLoader(TaskLoader):
                 output_digest = self.file_cacher.put_file_from_path(
                     output_path, output_desc)
 
-                codename = "%03d" % total_testcase_index
+                codename = "%02d.%02d" % (subtask_index, testcase_index)
 
                 args["testcases"] += [
                     Testcase(codename, True, input_digest, output_digest)
                 ]
-
-                total_testcase_index += 1
 
     def task_has_changed(self):
         """
