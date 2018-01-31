@@ -207,13 +207,24 @@ class IsraelTaskLoader(TaskLoader):
         Put the score type parameters in the given args.
         """
         # The subtask structure is used for the score type parameters.
-        # Each item in the list is of the form [score, num_testcases].
-        # For example: [[10, 5], [90, 20]]
+        # Each item in the list is of the form [score, codename_regex].
+        # For example: [[10, "01\..*"], [90, "(01\..*)|(02\..*)"]]
+        # We use the list of contained subtasks to generate the regex.
         subtask_structure = []
-        for subtask in self.subtasks:
-            subtask_structure += [
-                [subtask["score"], len(subtask["testcases"])]
-            ]
+        for (subtask_index, subtask) in enumerate(self.subtasks):
+
+            # The subtask contains all testcases that begin with its number.
+            # For every additional contained subtask, we take the union
+            # of its corresponding regex.
+            regex = "(%02d\\..*)" % subtask_index
+
+            if "contains" in subtask:
+                for other_subtask_index in subtask["contains"]:
+                    # Other subtask index is 1-based.
+                    regex += "|(%02d\\..*)" % (other_subtask_index - 1)
+
+            subtask_structure += [[subtask["score"], regex]]
+
         args["score_type_parameters"] = json.dumps(subtask_structure)
 
         # The score type is always "GroupMin". See CMS documentation.
