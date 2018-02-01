@@ -216,12 +216,12 @@ class IsraelTaskLoader(TaskLoader):
             # The subtask contains all testcases that begin with its number.
             # For every additional contained subtask, we take the union
             # of its corresponding regex.
-            regex = "(%02d\\..*)" % subtask_index
+            regex = "(%02d\\..*)" % (subtask_index + 1)
 
             if "contains" in subtask:
                 for other_subtask_index in subtask["contains"]:
                     # Other subtask index is 1-based.
-                    regex += "|(%02d\\..*)" % (other_subtask_index - 1)
+                    regex += "|(%02d\\..*)" % other_subtask_index
 
             subtask_structure += [[subtask["score"], regex]]
 
@@ -318,7 +318,8 @@ class IsraelTaskLoader(TaskLoader):
                 output_digest = self.file_cacher.put_file_from_path(
                     output_path, output_desc)
 
-                codename = "%02d.%02d" % (subtask_index, testcase_index)
+                codename = "%02d.%02d" % (subtask_index + 1,
+                                          testcase_index + 1)
 
                 args["testcases"] += [
                     Testcase(codename, True, input_digest, output_digest)
