@@ -101,7 +101,7 @@ class TaskSandbox(object):
 
         # Size limits, in KB.
         max_files_size = 200000
-        max_memory = 1000000
+        max_memory = 1600000
 
         # Time limits, in seconds.
         max_time = 120
