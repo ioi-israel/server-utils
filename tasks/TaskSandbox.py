@@ -9,6 +9,7 @@ import os
 import subprocess
 import sys
 from task_utils.processing import TaskProcessor
+from server_utils.config import CLONE_DIR
 
 
 class TaskSandbox(object):
@@ -163,6 +164,25 @@ class TaskSandbox(object):
                             "Stdout: %s\n"
                             "Stderr: %s\n" %
                             (return_code, stdout, stderr))
+
+
+def create_processor(task_dir):
+    """
+    Create a TaskProcessor object from the given task path,
+    which is assumed to be generated into the default auto.gen
+    directory. The task path must be relative to the clone directory
+    e.g. "tasks/user/taskname".
+
+    Raise an exception on failure.
+    """
+
+    path = os.path.realpath(os.path.join(CLONE_DIR, task_dir))
+    if not path.startswith(CLONE_DIR):
+        raise Exception("Invalid task directory: %s" % path)
+
+    gen_dir = os.path.join(path, "auto.gen")
+    module_path = os.path.join(gen_dir, "module.yaml")
+    return TaskProcessor.TaskProcessor(module_path, path, gen_dir)
 
 
 def main():
