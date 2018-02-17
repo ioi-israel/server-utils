@@ -12,6 +12,8 @@ Use the "with" keyword:
 As a standalone, use the command line arguments described by argparse.
 """
 
+from __future__ import unicode_literals
+
 import argparse
 import os
 import subprocess
@@ -20,9 +22,11 @@ import yaml
 
 from flufl.lock import Lock
 
+from server_utils.cms.scripts.DatabaseUtils import get_contest_tasks, \
+    remove_submissions, add_submissions
 from server_utils.config import LOCK_FILE, LOCK_LIFETIME, LOCK_TIMEOUT, \
     CLONE_DIR
-from server_utils.tasks.TaskSandbox import TaskSandbox
+from server_utils.tasks.TaskSandbox import TaskSandbox, create_processor
 
 
 class SafeUpdater(object):
@@ -122,7 +126,7 @@ class SafeUpdater(object):
         TaskSandbox.execute(repo_path, gen_dir=gen_dir)
 
     def update_contest(self, repo, update, generate_new, add_users,
-                       update_users):
+                       update_users, auto_submit, auto_submit_new):
         """
         Update a contest and its tasks on the database.
         This should be done after generating newly updated tasks
@@ -137,6 +141,12 @@ class SafeUpdater(object):
         If update_users is true, the users repository is updated,
         and the contest's users are updated. Users are never modified
         or deleted (this requires manual action).
+
+        auto_submit_tasks is a set/list of task repositories for which
+        auto_submit will be invoked.
+
+        If auto_submit_new is given, auto_submit will also be invoked
+        for tasks that were not in the contest before.
 
         Raise an exception on failure.
         """
@@ -166,6 +176,14 @@ class SafeUpdater(object):
                     self.generate_task(task_repo, update=True,
                                        allow_clone=True)
 
+        # Fetch the tasks that were already in the contest before.
+        # If an exception is raised, this contest is not yet in the database.
+        contest_name = contest_params["short_name"]
+        try:
+            existing_tasks = set(get_contest_tasks(contest_name))
+        except Exception:
+            existing_tasks = set()
+
         # Note: cmsImportContest drops participations when updating
         # a contest. We can give the --update-contest flag because
         # our cmsImportContest script was modified to ignore
@@ -175,6 +193,46 @@ class SafeUpdater(object):
                          "--update-tasks",
                          "--update-contest",
                          repo_path])
+
+        # Invoke auto_submit for every task that didn't exist
+        # in the contest before, and every task in auto_submit.
+        for task in contest_params["tasks"]:
+            task_name = task["short_name"]
+            task_path = task["path"]
+            if (auto_submit_new and task_name not in existing_tasks) or \
+               task_path in auto_submit:
+                self.auto_submit(contest_name, task)
+
+    def auto_submit(self, contest_name, task_info):
+        """
+        Perform auto submission for the given contest and task,
+        removing previous auto submissions from the database.
+        If the task does not specify any solutions to auto submit,
+        do nothing.
+        """
+
+        username = "autotester"
+        task_name = task_info["short_name"]
+        task_dir = os.path.join(CLONE_DIR, task_info["path"])
+        processor = create_processor(task_dir)
+
+        # For each submission, we convert the list of files to a dictionary
+        # that maps the submission filename to the path. For example:
+        # {"Task.%l": "path/to/sol.cpp"}
+        # This relies on the type being batch, with a single file
+        # per submission.
+        auto_submit_items = []
+        for item in processor.get_auto_submit_items():
+            file_path = item["files"][0]
+            auto_submit_items += [{"Task.%l": file_path}]
+
+        if not auto_submit_items:
+            return
+
+        if not remove_submissions(contest_name, task_name, username):
+            raise Exception("Auto submission failed: could not remove old "
+                            "submissions, they are in progress.")
+        add_submissions(contest_name, task_name, username, auto_submit_items)
 
     def add_new_users(self, users_file, update_repo):
         """
