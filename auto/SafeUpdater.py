@@ -23,7 +23,7 @@ import yaml
 from flufl.lock import Lock
 
 from server_utils.cms.scripts.DatabaseUtils import get_contest_tasks, \
-    remove_submissions, add_submissions
+    remove_submissions, add_submissions, add_users
 from server_utils.config import LOCK_FILE, LOCK_LIFETIME, LOCK_TIMEOUT, \
     CLONE_DIR
 from server_utils.tasks.TaskSandbox import TaskSandbox, create_processor
@@ -125,7 +125,7 @@ class SafeUpdater(object):
 
         TaskSandbox.execute(repo_path, gen_dir=gen_dir)
 
-    def update_contest(self, repo, update, generate_new, add_users,
+    def update_contest(self, repo, update, generate_new, add_new_users,
                        update_users, auto_submit, auto_submit_new):
         """
         Update a contest and its tasks on the database.
@@ -164,8 +164,9 @@ class SafeUpdater(object):
             contest_params = yaml.safe_load(stream)
 
         # Update/clone users, and add them.
-        if add_users:
-            self.add_new_users(contest_params["users_file"], update_users)
+        if add_new_users:
+            self.add_new_users(contest_params["users_file"], update_users,
+                               contest_params["short_name"])
 
         if generate_new:
             # Clone and generate tasks that are not yet present.
@@ -234,13 +235,15 @@ class SafeUpdater(object):
                             "submissions, they are in progress.")
         add_submissions(contest_name, task_name, username, auto_submit_items)
 
-    def add_new_users(self, users_file, update_repo):
+    def add_new_users(self, users_file, update_repo, contest_name=None):
         """
         Add the users in the given YAML path to the database.
         Users that already exist are ignored.
         This never deletes or modifies existing users.
 
         If update_repo is true, update/clone the users repository first.
+
+        If contest_name is given, add participations too.
 
         Raise an exception on failure.
         """
@@ -252,22 +255,9 @@ class SafeUpdater(object):
         # Get the information from the users file.
         yaml_path = os.path.join(CLONE_DIR, users_file)
         with open(yaml_path) as stream:
-            users = yaml.safe_load(stream)
+            users_info = yaml.safe_load(stream)
 
-        # Try to insert each user.
-        # The script cmsAddUser returns 1 if the user already exists.
-        for user in users:
-            return_code, stdout, stderr = SafeUpdater.run(
-                ["cmsAddUser", user["first_name"], user["last_name"],
-                 user["username"], "-p", user["password"]],
-                fail_abort=False)
-
-            if return_code not in (0, 1):
-                raise Exception("cmsAddUser failed.\n"
-                                "Return code: %s\n"
-                                "Stdout: %s\n"
-                                "Stderr: %s\n" %
-                                (return_code, stdout, stderr))
+        add_users(users_info, contest_name)
 
     def __enter__(self):
         """

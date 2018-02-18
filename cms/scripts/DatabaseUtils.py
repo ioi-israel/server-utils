@@ -204,3 +204,55 @@ def add_submissions(contest_name, task_name, username, items):
             rs.new_submission(submission_id=submission.id)
 
     rs.disconnect()
+
+
+def add_users(users_info, contest_name=None):
+    """
+    Add the given users to the database, if they don't exist.
+    If contest_name is given, participations are created
+    (for existing users, too).
+
+    Each user info should be a dictionary with the fields:
+    username, password, first_name, last_name,
+    and optionally: hidden, unrestricted.
+    """
+
+    with SessionGen() as session:
+        existing_users = session.query(User).all()
+        existing_usernames = {user.username: user for user in existing_users}
+
+        if contest_name is not None:
+            contest = get_contest(session, contest_name)
+            participations = session.query(Participation)\
+                .filter(Participation.contest_id == contest.id)\
+                .all()
+            existing_participations = set(participation.user.username
+                                          for participation in participations)
+        else:
+            existing_participations = set()
+
+        for user_info in users_info:
+            username = user_info["username"]
+
+            # If this user exists, fetch the User database object.
+            # Otherwise, create one.
+            if username in existing_usernames:
+                user = existing_usernames[username]
+            else:
+                user = User(first_name=unicode(user_info["first_name"]),
+                            last_name=unicode(user_info["last_name"]),
+                            username=unicode(username),
+                            password=unicode(user_info["password"]))
+                session.add(user)
+
+            # If the participation does not exist and the contest is given,
+            # add it.
+            if contest_name is not None and \
+               username not in existing_participations:
+                participation = Participation(
+                    user=user,
+                    contest=contest,
+                    hidden=user_info.get("hidden", False),
+                    unrestricted=user_info.get("unrestricted", False))
+                session.add(participation)
+        session.commit()
