@@ -8,6 +8,7 @@ import argparse
 import os
 import subprocess
 import sys
+import yaml
 from task_utils.processing import TaskProcessor
 from server_utils.config import CLONE_DIR
 
@@ -183,6 +184,28 @@ def create_processor(task_dir):
     gen_dir = os.path.join(path, "auto.gen")
     module_path = os.path.join(gen_dir, "module.yaml")
     return TaskProcessor.TaskProcessor(module_path, path, gen_dir)
+
+
+def processor_from_contest(task_name, contest_name):
+    """
+    Create a TaskProcessor object from the given task and contest names.
+    """
+
+    contest_path = os.path.realpath(os.path.join(CLONE_DIR, "contests",
+                                                 contest_name))
+    if not contest_path.startswith(CLONE_DIR):
+        raise Exception("Invalid contest: %s" % contest_path)
+
+    contest_module_path = os.path.join(contest_path, "module.yaml")
+    with open(contest_module_path) as stream:
+        contest_params = yaml.safe_load(stream)
+
+    for task in contest_params["tasks"]:
+        if task["short_name"] == task_name:
+            return create_processor(task["path"])
+
+    raise Exception("Task %s not present in contest %s." %
+                    (task_name, contest_name))
 
 
 def main():
