@@ -23,7 +23,7 @@ def get_user(session, username):
     Raise an exception if not found.
     """
     user = session.query(User)\
-        .filter(User.username == username)\
+        .filter(User.username == unicode(username))\
         .first()
     if user is None:
         raise Exception("User not found: %s" % username)
@@ -36,7 +36,7 @@ def get_contest(session, contest_name):
     Raise an exception if not found.
     """
     contest = session.query(Contest)\
-        .filter(Contest.name == contest_name)\
+        .filter(Contest.name == unicode(contest_name))\
         .first()
     if contest is None:
         raise Exception("Contest not found: %s" % contest_name)
@@ -67,7 +67,7 @@ def get_task(session, task_name, contest=None):
     the given contest, and raise an exception if not.
     """
     task = session.query(Task)\
-        .filter(Task.name == task_name)\
+        .filter(Task.name == unicode(task_name))\
         .first()
     if task is None:
         raise Exception("Task not found: %s" % task_name)
