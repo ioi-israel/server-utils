@@ -318,12 +318,15 @@ def main():
     parser.add_argument("--add_users",
                         help="add contest's users",
                         action="store_true")
+    parser.add_argument("--auto_submit_new",
+                        help="submit new tasks automatically for testing",
+                        action="store_true")
     args = parser.parse_args()
 
     with SafeUpdater() as updater:
         updater.update_contest(args.contest, args.update_repos,
                                args.generate_tasks, args.add_users,
-                               args.update_repos)
+                               args.update_repos, [], args.auto_submit_new)
 
     return 0
 
