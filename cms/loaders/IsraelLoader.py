@@ -20,6 +20,7 @@ from cms import SCORE_MODE_MAX
 from cms.db import Contest, Task, Statement, \
     SubmissionFormatElement, Dataset, Manager, Testcase, Attachment
 from cmscontrib.loaders.base_loader import ContestLoader, TaskLoader
+from cmscontrib import touch
 
 from server_utils.config import CLONE_DIR, time_from_str
 from task_utils.processing.TaskProcessor import TaskProcessor
@@ -49,14 +50,15 @@ class IsraelTaskLoader(TaskLoader):
         raise NotImplementedError("IsraelTaskLoader doesn't "
                                   "support detection.")
 
-    def __init__(self, path, file_cacher, task_contest_info=None):
+    def __init__(self, path, file_cacher, task_contest_info=None,
+                 contest_dir=None):
         """
         Create a new task loader.
         task_contest_info is a dictionary containing the task info specified
         in the contest. We don't load without it.
         """
         super(IsraelTaskLoader, self).__init__(path, file_cacher)
-        if task_contest_info is None:
+        if task_contest_info is None or contest_dir is None:
             raise Exception("Tasks can only be loaded from a contest.")
         self.task_contest_info = task_contest_info
         self.short_name = task_contest_info["short_name"]
@@ -75,12 +77,35 @@ class IsraelTaskLoader(TaskLoader):
         self.headers = self.processor.get_headers()
         self.managers = self.processor.get_managers()
 
+        # Use ".ok_task" and ".error_task" files in the contest directory
+        # to keep track of whether the task changed/imported successfully.
+        self.contest_ok_mark = os.path.join(contest_dir, ".ok_%s" %
+                                            self.short_name)
+        self.contest_error_mark = os.path.join(contest_dir, ".error_%s" %
+                                               self.short_name)
+        self.task_ok_mark = os.path.join(self.post_gen_dir, "gen.ok")
+        self.task_error_mark = os.path.join(self.post_gen_dir, "gen.error")
+
         logger.info("Fetched data from TaskProcessor.")
 
     def get_task(self, get_statement):
         """
         See docstring in base_loader.
         """
+
+        # Cannot import a task that with generation errors.
+        if os.path.isfile(self.task_error_mark):
+            raise Exception("Task has an error mark: %s" %
+                            self.task_error_mark)
+        if not os.path.isfile(self.task_ok_mark):
+            raise Exception("Task does not have an okay mark: %s" %
+                            self.task_ok_mark)
+
+        # Mark this import as an error until we finish.
+        touch(self.contest_error_mark)
+        if os.path.isfile(self.contest_ok_mark):
+            os.remove(self.contest_ok_mark)
+
         args = {}
 
         self.put_names(args)
@@ -92,6 +117,10 @@ class IsraelTaskLoader(TaskLoader):
 
         task = Task(**args)
         task.active_dataset = self.create_dataset(task)
+
+        # Success - mark this task as okay.
+        touch(self.contest_ok_mark)
+        os.remove(self.contest_error_mark)
         return task
 
     def put_names(self, args):
@@ -329,7 +358,18 @@ class IsraelTaskLoader(TaskLoader):
         """
         See docstring in base_loader.
         """
-        return True
+
+        # A task needs to be reimported if there is no okay mark
+        # in the contest directory, or there is an error mark,
+        # or the okay mark is older than the last generation.
+        if os.path.isfile(self.contest_error_mark):
+            return True
+        if not os.path.isfile(self.contest_ok_mark):
+            return True
+
+        contest_ok_time = os.path.getmtime(self.contest_ok_mark)
+        task_ok_time = os.path.getmtime(self.task_ok_mark)
+        return contest_ok_time < task_ok_time
 
 
 class IsraelContestLoader(ContestLoader):
@@ -408,7 +448,8 @@ class IsraelContestLoader(ContestLoader):
                             (taskname, self.contest_dir))
 
         task_path = os.path.join(CLONE_DIR, task_info["path"])
-        return IsraelTaskLoader(task_path, self.file_cacher, task_info)
+        return IsraelTaskLoader(task_path, self.file_cacher, task_info,
+                                self.contest_dir)
 
     def get_contest(self):
         """
