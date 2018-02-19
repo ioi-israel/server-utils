@@ -28,6 +28,9 @@ class TaskSandbox(object):
         If gen_dir is not given, it is assumed to be "auto.gen" inside
         task_dir. In any case, it is created if it doesn't exist,
         and it is given full permissions (777).
+
+        If the task does not need generating according to the TaskProcessor
+        class, do nothing.
         """
 
         if not os.path.isdir(task_dir):
@@ -35,6 +38,14 @@ class TaskSandbox(object):
 
         if gen_dir is None:
             gen_dir = os.path.join(task_dir, "auto.gen")
+
+        try:
+            need_gen = TaskProcessor.TaskProcessor.needs_generating(task_dir,
+                                                                    gen_dir)
+            if not need_gen:
+                return
+        except Exception:
+            pass
 
         if not os.path.isdir(gen_dir):
             os.mkdir(gen_dir)

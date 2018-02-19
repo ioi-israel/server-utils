@@ -197,7 +197,7 @@ class RequestHandler(pyinotify.ProcessEvent):
 
             if repo in self.contests:
                 logger.info("Updating contest %s in database...", repo)
-                updater.update_contest(repo, update=True, generate_new=True,
+                updater.update_contest(repo, update=True, generate=True,
                                        add_new_users=True, update_users=True,
                                        auto_submit=[], auto_submit_new=True)
                 logger.info("Updated contest %s in database.", repo)
@@ -210,7 +210,7 @@ class RequestHandler(pyinotify.ProcessEvent):
             logger.info("Updating users in all contests...")
             for contest in self.contests:
                 logger.info("Updating contest %s...", contest)
-                updater.update_contest(contest, update=True, generate_new=True,
+                updater.update_contest(contest, update=True, generate=True,
                                        add_new_users=True, update_users=True,
                                        auto_submit=[], auto_submit_new=False)
                 logger.info("Updated contest %s", contest)
@@ -232,7 +232,7 @@ class RequestHandler(pyinotify.ProcessEvent):
             logger.info("Updating the task's contests...")
             for contest in task_contests:
                 logger.info("Updating contest %s...", contest)
-                updater.update_contest(contest, update=True, generate_new=True,
+                updater.update_contest(contest, update=True, generate=True,
                                        add_new_users=True, update_users=False,
                                        auto_submit=[repo],
                                        auto_submit_new=True)

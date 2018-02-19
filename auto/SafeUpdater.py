@@ -125,15 +125,15 @@ class SafeUpdater(object):
 
         TaskSandbox.execute(repo_path, gen_dir=gen_dir)
 
-    def update_contest(self, repo, update, generate_new, add_new_users,
+    def update_contest(self, repo, update, generate, add_new_users,
                        update_users, auto_submit, auto_submit_new):
         """
         Update a contest and its tasks on the database.
         This should be done after generating newly updated tasks
         with TaskSandbox, in order to update CMS.
 
-        Tasks that exist in the contest and are not yet cloned,
-        are cloned and generated, if generate_new is true.
+        If generate is true, tasks are updated and generated
+        (cloned if needed).
 
         The contest repository itself is updated (cloned if needed),
         if update is true.
@@ -168,14 +168,11 @@ class SafeUpdater(object):
             self.add_new_users(contest_params["users_file"], update_users,
                                contest_params["short_name"])
 
-        if generate_new:
-            # Clone and generate tasks that are not yet present.
+        if generate:
+            # Clone and generate tasks.
             for task in contest_params["tasks"]:
                 task_repo = task["path"]
-                task_path = os.path.join(CLONE_DIR, task_repo)
-                if not os.path.isdir(task_path):
-                    self.generate_task(task_repo, update=True,
-                                       allow_clone=True)
+                self.generate_task(task_repo, update=True, allow_clone=True)
 
         # Fetch the tasks that were already in the contest before.
         # If an exception is raised, this contest is not yet in the database.
