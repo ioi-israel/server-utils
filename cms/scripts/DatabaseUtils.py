@@ -213,8 +213,11 @@ def add_users(users_info, contest_name=None):
     (for existing users, too).
 
     Each user info should be a dictionary with the fields:
-    username, password, first_name, last_name,
-    and optionally: hidden, unrestricted.
+    username, password. Optionally:
+    first_name (default is empty).
+    last_name (default is empty).
+    hidden (default is false).
+    unrestricted (default is false).
     """
 
     with SessionGen() as session:
@@ -239,10 +242,13 @@ def add_users(users_info, contest_name=None):
             if username in existing_usernames:
                 user = existing_usernames[username]
             else:
-                user = User(first_name=unicode(user_info["first_name"]),
-                            last_name=unicode(user_info["last_name"]),
+                first_name = user_info.get("first_name", "")
+                last_name = user_info.get("last_name", "")
+                password = user_info["password"]
+                user = User(first_name=unicode(first_name),
+                            last_name=unicode(last_name),
                             username=unicode(username),
-                            password=unicode(user_info["password"]))
+                            password=unicode(password))
                 session.add(user)
 
             # If the participation does not exist and the contest is given,
