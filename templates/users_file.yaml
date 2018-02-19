@@ -1,14 +1,17 @@
 # Template for a users file.
 # Each entry must contain: "username", "password", "first_name", "last_name".
 #
-# Optionally, "hidden" can be set to a boolean in order to hide the user
+# Optionally, "hidden" can be set to true in order to hide the user
 # from scoreboards. The default is false.
+# Similarly, "unrestricted" can be set in order to give the user
+# unlimited submission access regardless of contest time.
 
-- username:   "john.doe"
-  password:   "hunter2"
-  first_name: "John"
-  last_name:  "Doe"
-  hidden:     true
+- username:     "john.doe"
+  password:     "hunter2"
+  first_name:   "John"
+  last_name:    "Doe"
+  hidden:       true
+  unrestricted: true
 
 - username:   "jane.doe"
   password:   "huntress2"

@@ -508,7 +508,7 @@ class IsraelContestLoader(ContestLoader):
     def get_participations_info(self):
         """
         To create a participation, we need two fields:
-        a username, and whether the user is hidden.
+        a username, and whether the user is hidden and/or unrestricted.
 
         Passwords are ignored, since we don't use contest-specific passwords.
         """
@@ -522,5 +522,7 @@ class IsraelContestLoader(ContestLoader):
             participation_info = {"username": user["username"]}
             if "hidden" in user:
                 participation_info["hidden"] = user["hidden"]
+            if "unrestricted" in user:
+                participation_info["unrestricted"] = user["unrestricted"]
             result += [participation_info]
         return result
