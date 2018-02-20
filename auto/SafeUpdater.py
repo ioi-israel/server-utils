@@ -126,7 +126,8 @@ class SafeUpdater(object):
         TaskSandbox.execute(repo_path, gen_dir=gen_dir)
 
     def update_contest(self, repo, update, generate, add_new_users,
-                       update_users, auto_submit, auto_submit_new):
+                       update_users, auto_submit, auto_submit_new,
+                       auto_submit_all=False):
         """
         Update a contest and its tasks on the database.
         This should be done after generating newly updated tasks
@@ -195,10 +196,11 @@ class SafeUpdater(object):
         # Invoke auto_submit for every task that didn't exist
         # in the contest before, and every task in auto_submit.
         for task in contest_params["tasks"]:
-            task_name = task["short_name"]
-            task_path = task["path"]
-            if (auto_submit_new and task_name not in existing_tasks) or \
-               task_path in auto_submit:
+            is_new = task["short_name"] not in existing_tasks
+            should_submit = auto_submit_all
+            should_submit |= auto_submit_new and is_new
+            should_submit |= task["path"] in auto_submit
+            if should_submit:
                 self.auto_submit(contest_name, task)
 
     def auto_submit(self, contest_name, task_info):
@@ -318,12 +320,16 @@ def main():
     parser.add_argument("--auto_submit_new",
                         help="submit new tasks automatically for testing",
                         action="store_true")
+    parser.add_argument("--auto_submit_all",
+                        help="automatic submission tests for all tasks",
+                        action="store_true")
     args = parser.parse_args()
 
     with SafeUpdater() as updater:
         updater.update_contest(args.contest, args.update_repos,
                                args.generate_tasks, args.add_users,
-                               args.update_repos, [], args.auto_submit_new)
+                               args.update_repos, [], args.auto_submit_new,
+                               args.auto_submit_all)
 
     return 0
 
