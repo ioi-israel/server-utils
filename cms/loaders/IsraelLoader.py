@@ -80,9 +80,9 @@ class IsraelTaskLoader(TaskLoader):
         # Use ".ok_task" and ".error_task" files in the contest directory
         # to keep track of whether the task changed/imported successfully.
         self.contest_ok_mark = os.path.join(contest_dir, ".ok.%s_%s" %
-                                            SERVER_NAME, self.short_name)
+                                            (SERVER_NAME, self.short_name))
         self.contest_error_mark = os.path.join(contest_dir, ".error.%s_%s" %
-                                               SERVER_NAME, self.short_name)
+                                               (SERVER_NAME, self.short_name))
         self.task_ok_mark = os.path.join(self.post_gen_dir, "gen.ok")
         self.task_error_mark = os.path.join(self.post_gen_dir, "gen.error")
 
