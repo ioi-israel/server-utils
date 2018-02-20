@@ -1,3 +1,6 @@
+general:
+  name: "training"
+
 paths:
   clone_dir: "/home/ioi/cms-data"
   requests_dir: "/var/lib/gitolite3/requests"

@@ -26,6 +26,7 @@ LOCK_TIMEOUT = timedelta(seconds=_CONFIG["locks"]["timeout"])
 REQUEST_COOLING = _CONFIG["requests"]["cooling_period"]
 ACTIVE_CONTESTS = _CONFIG["requests"]["active_contests"]
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+SERVER_NAME = _CONFIG["general"]["name"]
 
 
 def time_from_str(time_str, str_format=TIME_FORMAT):
