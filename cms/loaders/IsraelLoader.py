@@ -14,11 +14,13 @@ from datetime import timedelta
 import json
 import logging
 import os
+import time
 import yaml
 
 from cms import SCORE_MODE_MAX
 from cms.db import Contest, Task, Statement, \
     SubmissionFormatElement, Dataset, Manager, Testcase, Attachment
+from cmscommon.datetime import make_datetime
 from cmscontrib.loaders.base_loader import ContestLoader, TaskLoader
 from cmscontrib import touch
 
@@ -474,8 +476,10 @@ class IsraelContestLoader(ContestLoader):
         args["languages"] = self.params["languages"]
 
         # Times.
-        args["start"] = time_from_str(self.params["start_time"])
-        args["stop"] = time_from_str(self.params["end_time"])
+        start_time = time_from_str(self.params["start_time"])
+        stop_time = time_from_str(self.params["end_time"])
+        args["start"] = make_datetime(time.mktime(start_time.timetuple()))
+        args["stop"] = make_datetime(time.mktime(stop_time.timetuple()))
 
         # Limits.
         args["max_submission_number"] = self.params["max_submission_number"]
