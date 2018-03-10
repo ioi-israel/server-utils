@@ -475,6 +475,9 @@ class IsraelContestLoader(ContestLoader):
         # Languages.
         args["languages"] = self.params["languages"]
 
+        # Communication
+        args["allow_questions"] = self.params.get("allow_questions", False)
+
         # Times.
         start_time = time_from_str(self.params["start_time"])
         stop_time = time_from_str(self.params["end_time"])

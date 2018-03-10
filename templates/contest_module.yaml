@@ -35,3 +35,6 @@ max_submission_number:    null
 max_user_test_number:     null
 min_submission_interval:  null
 min_user_test_interval:   null
+
+# Communication. The default is to not allow questions.
+allow_questions: false
