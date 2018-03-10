@@ -278,7 +278,7 @@ def add_submissions(contest_name, task_name, username, items):
 def add_users(users_info, contest_name=None):
     """
     Add the given users to the database, if they don't exist.
-    If contest_name is given, participations are created
+    If contest_name is given and it exists, participations are created
     (for existing users, too).
 
     Each user info should be a dictionary with the fields:
@@ -293,14 +293,17 @@ def add_users(users_info, contest_name=None):
         existing_users = session.query(User).all()
         existing_usernames = {user.username: user for user in existing_users}
 
-        if contest_name is not None:
+        # If the contest does not exist, this raises an exception,
+        # and participations will not be created.
+        try:
             contest = get_contest(session, contest_name)
             participations = session.query(Participation)\
                 .filter(Participation.contest_id == contest.id)\
                 .all()
             existing_participations = set(participation.user.username
                                           for participation in participations)
-        else:
+        except Exception:
+            contest = None
             existing_participations = set()
 
         for user_info in users_info:
@@ -322,7 +325,7 @@ def add_users(users_info, contest_name=None):
 
             # If the participation does not exist and the contest is given,
             # add it.
-            if contest_name is not None and \
+            if contest is not None and \
                username not in existing_participations:
                 participation = Participation(
                     user=user,

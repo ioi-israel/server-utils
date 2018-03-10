@@ -242,7 +242,7 @@ class SafeUpdater(object):
 
         If update_repo is true, update/clone the users repository first.
 
-        If contest_name is given, add participations too.
+        If contest_name is given and it exists, add participations too.
 
         Raise an exception on failure.
         """
