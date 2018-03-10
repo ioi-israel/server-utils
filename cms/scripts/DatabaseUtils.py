@@ -87,6 +87,75 @@ def get_user_task_submissions(session, participation, task):
         .all()
 
 
+def get_contests(session, included=None, excluded=None):
+    """
+    Get a list of all Contest objects.
+    If "included" is given, it is expected to be a list of names,
+    and then only those contests would be returned.
+
+    In any case, the contest names in the "excluded" set are omitted
+    from the result (default is none).
+    """
+
+    contests = session.query(Contest).all()
+
+    if included is not None:
+        name_to_contest = {contest.name: contest for contest in contests}
+        contests = [name_to_contest[name] for name in included]
+
+    if excluded is not None:
+        contests = [contest for contest in contests
+                    if contest.name not in excluded]
+
+    return contests
+
+
+def get_tasks(session, included=None, excluded=None):
+    """
+    Get a list of all Task objects.
+    If "included" is given, it is expected to be a list of names,
+    and then only those tasks would be returned.
+
+    In any case, the task names in the "excluded" set are omitted
+    from the result (default is none).
+    """
+
+    tasks = session.query(Task).all()
+
+    if included is not None:
+        name_to_task = {task.name: task for task in tasks}
+        tasks = [name_to_task[name] for name in included]
+
+    if excluded is not None:
+        tasks = [task for task in tasks
+                 if task.name not in excluded]
+
+    return tasks
+
+
+def get_users(session, included=None, excluded=None):
+    """
+    Get a list of all User objects.
+    If "included" is given, it is expected to be a list of usernames,
+    and then only those users would be returned.
+
+    In any case, the usernames in the "excluded" set are omitted
+    from the result (default is none).
+    """
+
+    users = session.query(User).all()
+
+    if included is not None:
+        name_to_user = {user.username: user for user in users}
+        users = [name_to_user[name] for name in included]
+
+    if excluded is not None:
+        users = [user for user in users
+                 if user.username not in excluded]
+
+    return users
+
+
 def get_contest_tasks(contest_name):
     """
     Get a list of the task names that belong to the given contest name.
