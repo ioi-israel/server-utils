@@ -208,6 +208,20 @@ $(function() {
         if(scoreString === null || scoreString === undefined || scoreString === "") {
             return "-";
         }
+
+        // If the score is very very close to the previous integer, we round.
+        // Makes "100.0" show as "100".
+        let partial = scoreString.endsWith("*");
+        let score = scoreStringToNumber(scoreString);
+        let scoreInt = Math.floor(score);
+
+        if(Math.abs(score - scoreInt) < 0.00001) {
+            scoreString = String(scoreInt);
+            if(partial) {
+                scoreString += "*";
+            }
+        }
+
         return scoreString;
     }
 

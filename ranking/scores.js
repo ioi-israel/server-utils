@@ -11,7 +11,7 @@ var raw_data = {
             ".task1": "30.2"
         },
         "contestant2": {
-            ".task1": "100",
+            ".task1": "100.00*",
             "task2": "80"
         }
     }
