@@ -1,0 +1,164 @@
+body {
+    font: 1em/1.5em sans-serif;
+}
+
+.mainTitle {
+    margin-top: 40px;
+    margin-bottom: 40px;
+    font-family: ubuntu, tahoma;
+    text-align: center;
+    width: 100%;
+    font-size: 40px;
+}
+
+.mainTableDiv {
+    width: 90%; 
+    overflow-x:scroll;  
+    margin-left:10em;
+    overflow-y:visible;
+    padding-bottom:1px;
+}
+
+.mainTable {
+    width: 100%;
+    /*table-layout: fixed;*/
+    /*padding-top: 30px;*/
+    /*margin-top: 10px;*/
+    margin: 10px auto;
+}
+
+.mainTable tr td {
+    border-radius: 4px;
+}
+
+.headerRow td {
+    border-collapse: separate;
+    border-spacing: 2px;
+    border-color: grey;
+    background-color: #ECECEF;
+    border: 1px #D0D0D2 solid;
+    font-weight: bold;
+    font-size: 16px;
+    height: 60px;
+    
+}
+
+.headerRow .username {
+    text-align: center;
+    height: 72px;
+    border: 0px !important;
+    background: transparent !important;
+}
+
+.taskHeader {
+    min-width: 100px;
+    max-width: 100px;
+    text-align: center;
+    word-break: break-all; /* To see long task names. */
+}
+
+.taskScore {
+    text-align: center;
+    background-color: lightgreen;
+}
+
+.username {
+    border-collapse: separate;
+    border-spacing: 4px;
+    border-radius: 0px !important;
+    border-left: 0px #D0D0D2 dotted;
+    border-right: 0px white solid;
+    border-bottom: 2px #D0D0D2 dotted;
+    border-top: 2px #D0D0D2 dotted;
+
+    position:absolute; 
+    width:8em; 
+    left:32px;
+    top:auto;
+}
+
+.userRow {
+    opacity: 1;
+}
+
+.userRow:hover {
+    opacity: 0.7;
+}
+
+.globalScore {
+    margin-left: 50px;
+    margin-right: 50px;
+}
+
+.globalSeparator {
+    border: 0px !important;
+    border-radius: 0px !important;
+    background-color: transparent !important;
+    width:8px !important;
+    min-width: 8px !important;
+    max-width: 8px !important;
+}
+
+#controls {
+    padding-top: 20px;
+    margin-bottom: 20px;
+    margin-left: 20px;
+    font-size: 20px;
+}
+
+#controlSelect {
+    width: 160px;
+    font-size: 20px;
+}
+
+.score_none {
+    background-color: #FFFFFF;
+}
+
+.score_0 {
+    background-color: #BA0000;
+}
+
+.score_0_10 {
+    background-color: #EB1D00;
+}
+
+.score_10_20 {
+    background-color: #E23A00;
+}
+
+.score_20_30 {
+    background-color: #D95700;
+}
+
+.score_30_40 {
+    background-color: #D17400;
+}
+
+.score_40_50 {
+    background-color: #C89100;
+}
+
+.score_50_60 {
+    background-color: #B99F00;
+}
+
+.score_60_70 {
+    background-color: #A39E01;
+}
+
+.score_70_80 {
+    background-color: #8E9D02;
+}
+
+.score_80_90 {
+    background-color: #789C03;
+}
+
+.score_90_100 {
+    background-color: #639B04;
+}
+
+.score_100 {
+    background-color: #4E9A05;
+}

@@ -1,0 +1,13 @@
+# File to write JS rank info to. Must be scores.js.
+target_path: "/path/to/scores.js"
+
+included_contests:
+  - "contest1"
+
+excluded_tasks:
+  - "task1"
+  - "task2"
+
+excluded_users:
+  - "user1"
+  - "user2"
