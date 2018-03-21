@@ -114,6 +114,33 @@ $(function() {
         return parseFloat(scoreString);
     }
 
+    function getMaxScoreString(scoreString1, scoreString2) {
+        if(scoreString1 === scoreString2) {
+            return scoreString1;
+        }
+        if(scoreString1 === null || scoreString1 === undefined) {
+            return scoreString2;
+        }
+        if(scoreString2 === null || scoreString2 === undefined) {
+            return scoreString1;
+        }
+
+        var score1 = scoreStringToNumber(scoreString1);
+        var score2 = scoreStringToNumber(scoreString2);
+        if(score1 < score2) {
+            return scoreString2;
+        }
+        else if(score2 < score1) {
+            return scoreString1;
+        }
+
+        if(scoreString1.endsWith("*")) {
+            return scoreString1;
+        }
+
+        return scoreString2;
+    }
+
     function refreshUserList() {
         userList = [];
         for(let user in raw_data.scores) {
@@ -151,9 +178,9 @@ $(function() {
 
                 // If the mode is best of both, and the home improves the score,
                 // we take it. Otherwise, use the original score.
-                if(controlsMode === "best" && score < homeScore) {
-                    userInfo.scores[taskName] = homeScoreString;
-                    userInfo.globalScore += homeScore;
+                if(controlsMode === "best") {
+                    userInfo.scores[taskName] = getMaxScoreString(scoreString, homeScoreString);
+                    userInfo.globalScore += Math.max(score, homeScore);
                 }
                 else {
                     userInfo.scores[taskName] = scoreString;

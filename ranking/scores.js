@@ -13,6 +13,12 @@ var raw_data = {
         "contestant2": {
             ".task1": "100.00*",
             "task2": "80"
-        }
+        },
+        "contestant3": {
+            ".task1": "0",
+        },
+        "contestant4": {
+            "task1": "0"
+        },
     }
 };
