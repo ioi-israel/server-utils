@@ -170,16 +170,16 @@ class IsraelTaskLoader(TaskLoader):
             args["submission_format"] = [SubmissionFormatElement("Task.%l")]
 
         elif self.task_type == "OutputOnly":
-            # Output files must always be in the form "output_000.txt",
-            # "output_001.txt", and so on.
-            total_testcases = sum(len(subtask["testcases"])
-                                  for subtask in self.subtasks)
-
+            # Output files must always be in the form "output_01.01.txt",
+            # "output_01.02.txt", and so on.
             args["submission_format"] = []
-            for index in xrange(total_testcases):
-                args["submission_format"] += [
-                    SubmissionFormatElement("output_%03d.txt" % index)
-                ]
+            for (subtask_index, subtask) in enumerate(self.subtasks):
+                for testcase_index in xrange(len(subtask["testcases"])):
+                    args["submission_format"] += [
+                        SubmissionFormatElement("output_%02d.%02d.txt" %
+                                                (subtask_index + 1,
+                                                 testcase_index + 1))
+                    ]
 
         elif self.task_type == "TwoSteps":
             # TwoSteps files are always "encoder" and "decoder".
