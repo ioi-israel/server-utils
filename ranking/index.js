@@ -89,15 +89,19 @@ $(function() {
         /*
          * The task columns are all relevant tasks,
          * according to the selection.
-         * Home tasks are not relevant when "onlyClassroom" or "best".
+         * Home tasks which are also in the classroom are not relevant
+         * when "onlyClassroom" or "best".
          */
         taskColumns = [];
         for(let i = 0; i < allTasksArray.length; i++) {
             let taskName = allTasksArray[i];
-            if(controlsMode != "onlyHome" && isHomeName(taskName)) {
+            if(controlsMode == "onlyClassroom" && isHomeName(taskName)) {
                 continue;
             }
             if(controlsMode == "onlyHome" && !isHomeName(taskName)) {
+                continue;
+            }
+            if(controlsMode == "best" && allTasksObject[getClassroomName(taskName)]) {
                 continue;
             }
             taskColumns.push(taskName);

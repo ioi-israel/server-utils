@@ -1,7 +1,7 @@
 var raw_data = {
     "contests": [
         {
-            "tasks": ["task1", "task2", ".task1"],
+            "tasks": [".task1", ".task2", "task1", "task2", ".task3"],
             "name": "testing"
         }
     ],
@@ -18,7 +18,8 @@ var raw_data = {
             ".task1": "0",
         },
         "contestant4": {
-            "task1": "0"
+            "task1": "0",
+            ".task3": "10",
         },
     }
 };
