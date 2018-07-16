@@ -13,6 +13,7 @@ The JS file contains a global "raw_data" object, with fields:
 import argparse
 import json
 import sys
+import time
 import yaml
 
 from cms.db import SessionGen
@@ -93,7 +94,8 @@ def dump_ranks_js(path, ranks_object):
     Dump the given ranks object to the given path as a JS file.
     The JS file contains only "var raw_data = <object>;".
     """
-    js_str = "var raw_data = %s;" % json.dumps(ranks_object)
+    js_str = "var raw_data = %s;" % json.dumps(ranks_object) + \
+             "var scores_timestamp = %d;" % int(time.time())
     with open(path, "w") as stream:
         stream.write(js_str)
 

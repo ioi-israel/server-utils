@@ -5,11 +5,18 @@ $(function() {
     let controlsMode;
 
     function init() {
+        initTimestamp()
         initAllTasks();
         showControls = needsControls();
         setControlsVisibility(showControls);
         initControls();
         refresh();
+    }
+
+    function initTimestamp() {
+        // Date object expects unix time in milliseocnds.
+        let date = new Date(scores_timestamp * 1000);
+        $("#timestamp").text("Updated: " + date.toLocaleTimeString() + ", " + date.toLocaleDateString());
     }
 
     function initAllTasks() {
