@@ -117,8 +117,8 @@ class TaskSandbox(object):
         max_memory = 1600000
 
         # Time limits, in seconds.
-        max_time = 120
-        max_time_wall = 120
+        max_time = 300
+        max_time_wall = 300
 
         # Other limits.
         max_processes = 50
