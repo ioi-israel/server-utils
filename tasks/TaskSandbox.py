@@ -172,10 +172,11 @@ class TaskSandbox(object):
 
         if return_code != 0:
             raise Exception("Sandbox run finished with an error.\n"
+                            "Task: %s\n"
                             "Return code: %s\n"
                             "Stdout: %s\n"
                             "Stderr: %s\n" %
-                            (return_code, stdout, stderr))
+                            (task_dir, return_code, stdout, stderr))
 
 
 def create_processor(task_dir):
