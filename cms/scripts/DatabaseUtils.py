@@ -5,16 +5,24 @@ Utilities for interacting with the CMS database.
 """
 
 
+import logging
 import os
 import time
 
+from pytz import timezone
+
+import cms.log
+
 from cms import ServiceCoord
 from cms.db import Contest, File, Participation, SessionGen, Submission, \
-    Task, User
+    Task, User, SubmissionResult, Dataset, FSObject
 from cms.db.filecacher import FileCacher
-from cms.grading.languagemanager import filename_to_language
+from cms.grading.languagemanager import filename_to_language, get_language
 from cms.io import RemoteServiceClient
 from cmscommon.datetime import make_datetime
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_user(session, username):
@@ -334,3 +342,122 @@ def add_users(users_info, contest_name=None):
                     unrestricted=user_info.get("unrestricted", False))
                 session.add(participation)
         session.commit()
+
+
+def export_submissions(target_dir, contest_names, overwrite=False,
+                       make_dir=True):
+    """
+    Export all submissions from the given contests to the given directory.
+    If overwrite is true, existing files are overwritten. Otherwise,
+    raise an exception if a file exists.
+    If make_dir is true, create all subdirectories needed for the
+    following format. Otherwise, assume they exist.
+
+    The files of each submission are put in a directory:
+    target_dir/contest_name/task_name/user_name/submission_string/
+
+    Where submission_string includes the date, time, task, user, score.
+    For example:
+    2018-01-01.10-00.1.task_name.username.score-100
+    2018-01-01.10-00.2.task_name.username.compilation-fail
+    """
+
+    with SessionGen() as session:
+        for contest_name in contest_names:
+            contest = session.query(Contest)\
+                .filter(Contest.name == unicode(contest_name))\
+                .first()
+            if contest is None:
+                raise Exception("Contest not found: %s" % contest_name)
+
+            logger.info("Querying database for submissions in contest %s...",
+                        contest_name)
+
+            submissions = session.query(Submission)\
+                .filter(Participation.contest_id == contest.id)\
+                .join(Submission.task)\
+                .join(Submission.files)\
+                .join(Submission.results)\
+                .join(SubmissionResult.dataset)\
+                .join(Submission.participation)\
+                .join(Participation.user)\
+                .filter(Dataset.id == Task.active_dataset_id)\
+                .with_entities(Submission.id,
+                               Submission.language,
+                               Submission.timestamp,
+                               SubmissionResult.score,
+                               SubmissionResult.compilation_outcome,
+                               File.filename,
+                               File.digest,
+                               User.username,
+                               Task.name)\
+                .all()
+
+            logger.info("Found %d submissions. Saving...", len(submissions))
+
+            for (index, row) in enumerate(submissions, 1):
+                logger.info("Contest %s: saving submission (%d / %d)",
+                            contest_name, index, len(submissions))
+
+                # Get submission info and target file path.
+                sid, language, timestamp, score, comp_outcome, filename,\
+                    digest, username, task_name = row
+                file_path = _get_submission_file_path(
+                    target_dir, sid, language, timestamp, score, comp_outcome,
+                    filename, username, task_name, contest_name)
+
+                # Don't overwrite if not allowed.
+                if not overwrite and os.path.exists(file_path):
+                    raise Exception("File exists: %s" % file_path)
+
+                # Make directories if necessary.
+                if make_dir:
+                    dir_path = os.path.dirname(file_path)
+                    if not os.path.exists(dir_path):
+                        os.makedirs(dir_path)
+
+                # Save the file.
+                fso = FSObject.get_from_digest(digest, session)
+                with fso.get_lobject(mode="rb") as file_obj:
+                    data = file_obj.read()
+                    with open(file_path, "w") as stream:
+                        stream.write(data)
+
+
+def _get_submission_file_path(target_dir, sid, language, timestamp, score,
+                              comp_outcome, filename, username, task_name,
+                              contest_name):
+    """
+    Get the full file path for the given submission.
+    See export_submissions.
+    Timestamps are hard coded to convert from UTC to Asia/Jerusalem.
+    """
+
+    # Time in directory name.
+    utc_stamp = timestamp.replace(tzinfo=timezone('UTC'))
+    local_stamp = utc_stamp.astimezone(timezone('Asia/Jerusalem'))
+    time_str = local_stamp.strftime("%Y-%m-%d.%H-%M")
+
+    # Score in directory name.
+    if comp_outcome == "fail":
+        score_str = "compilation-failed"
+    elif score is None:
+        score_str = "score-none"
+    else:
+        # Round down if there is no need for precision.
+        if score - int(score) < 0.01:
+            score_str = "score-%d" % int(score)
+        else:
+            score_str = "score-%.02f" % score
+
+    # Submission directory name.
+    submission_string = "%s.%s.%s.%s.%s" % (time_str, sid, task_name,
+                                            username, score_str)
+
+    # Replace file name extension if needed.
+    if filename.endswith(".%l"):
+        filename = filename[:-3] + get_language(language).source_extension
+
+    # Join everything.
+    return os.path.join(target_dir, contest_name, task_name, username,
+                        submission_string, filename)
